@@ -1,23 +1,26 @@
 <?php
 /**
- * Plugin Name: Login with Google
- * Description: Allow users to login/register via Google.
- * Version: 1.4.2
- * Author: rtCamp
- * Author URI: https://rtcamp.com
- * Text Domain: login-with-google
+ * Plugin Name: OAuth Login
+ * Description: Allow users to login/register via any OAuth 2.0 provider.
+ * Version: 2.0.0
+ * Author: Circularlizard
+ * Author URI: https://github.com/circularlizard
+ * Text Domain: oauth-login
  * Domain Path: /languages
  * License: GPLv2+
  * Requires at least: 5.5
  * Requires PHP: 7.4
  *
- * @package RtCamp\GoogleLogin
- * @since 1.0.0
+ * @package Circularlizard\OAuthLogin
+ * @since 2.0.0
+ *
+ * This plugin is a fork of "Login with Google" by rtCamp.
+ * Original plugin: https://github.com/rtCamp/login-with-google
  */
 
 declare(strict_types=1);
 
-namespace RtCamp\GoogleLogin;
+namespace Circularlizard\OAuthLogin;
 
 use Pimple\Container as PimpleContainer;
 
@@ -38,15 +41,15 @@ if ( version_compare( PHP_VERSION, '7.4', '<' ) ) {
 			$hook,
 			function () {
 				$message = __(
-					'Login with google Plugin requires PHP version 7.4 or higher. <br />Please ask your server administrator to update your environment to latest PHP version',
-					'login-with-google'
+					'OAuth Login Plugin requires PHP version 7.4 or higher. <br />Please ask your server administrator to update your environment to latest PHP version',
+					'oauth-login'
 				);
 
 				printf(
 					'<div class="notice notice-error"><span class="notice-title">%1$s</span><p>%2$s</p></div>',
 					esc_html__(
-						'The plugin Login with google has been deactivated',
-						'login-with-google'
+						'The plugin OAuth Login has been deactivated',
+						'oauth-login'
 					),
 					wp_kses( $message, [ 'br' => true ] )
 				);
@@ -117,7 +120,7 @@ function plugin(): Plugin {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Nonce verification is not required here.
 	if ( isset( $_GET['reauth'] ) && null !== sanitize_text_field( wp_unslash( $_GET['reauth'] ) ) ) {
 		if ( ! empty( $_COOKIE[ LOGGED_IN_COOKIE ] ) ) {
-			wp_safe_redirect( wp_login_url(), 302, 'Login with Google' );
+			wp_safe_redirect( wp_login_url(), 302, 'OAuth Login' );
 			exit;
 		}
 	}

@@ -2,26 +2,26 @@
 /**
  * Test for Authenticator class.
  *
- * @package RtCamp\GoogleLogin
+ * @package Circularlizard\OAuthLogin
  */
 
 declare(strict_types=1);
 
-namespace RtCamp\GoogleLogin\Tests\Unit\Utils;
+namespace Circularlizard\OAuthLogin\Tests\Unit\Utils;
 
 use WP_Mock;
 use Mockery;
-use RtCamp\GoogleLogin\Utils\Helper;
-use RtCamp\GoogleLogin\Modules\Settings;
-use RtCamp\GoogleLogin\Tests\TestCase;
-use RtCamp\GoogleLogin\Utils\Authenticator as Testee;
+use Circularlizard\OAuthLogin\Utils\Helper;
+use Circularlizard\OAuthLogin\Modules\Settings;
+use Circularlizard\OAuthLogin\Tests\TestCase;
+use Circularlizard\OAuthLogin\Utils\Authenticator as Testee;
 
 /**
  * Class AuthenticatorTest
  *
- * @coversDefaultClass \RtCamp\GoogleLogin\Utils\Authenticator
+ * @coversDefaultClass \Circularlizard\OAuthLogin\Utils\Authenticator
  *
- * @package RtCamp\GoogleLogin
+ * @package Circularlizard\OAuthLogin
  */
 class AuthenticatorTest extends TestCase {
 

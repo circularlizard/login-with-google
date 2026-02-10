@@ -5,22 +5,22 @@
 
 declare(strict_types=1);
 
-namespace RtCamp\GoogleLogin\Tests\Unit;
+namespace Circularlizard\OAuthLogin\Tests\Unit;
 
 use WP_Mock;
-use RtCamp\GoogleLogin\Plugin;
-use RtCamp\GoogleLogin\Container;
-use RtCamp\GoogleLogin\Tests\TestCase;
-use RtCamp\GoogleLogin\Plugin as Testee;
-use RtCamp\GoogleLogin\Interfaces\Module as ModuleInterface;
-use RtCamp\GoogleLogin\Interfaces\Container as ContainerInterface;
+use Circularlizard\OAuthLogin\Plugin;
+use Circularlizard\OAuthLogin\Container;
+use Circularlizard\OAuthLogin\Tests\TestCase;
+use Circularlizard\OAuthLogin\Plugin as Testee;
+use Circularlizard\OAuthLogin\Interfaces\Module as ModuleInterface;
+use Circularlizard\OAuthLogin\Interfaces\Container as ContainerInterface;
 
 /**
  * Class PluginTest
  *
- * @coversDefaultClass \RtCamp\GoogleLogin\Plugin
+ * @coversDefaultClass \Circularlizard\OAuthLogin\Plugin
  *
- * @package RtCamp\GoogleLogin\Tests\Unit
+ * @package Circularlizard\OAuthLogin\Tests\Unit
  */
 class PluginTest extends TestCase {
 
@@ -93,7 +93,7 @@ class PluginTest extends TestCase {
 			'plugin_basename',
 			[],
 			1,
-			'login-with-google'
+			'oauth-login'
 		);
 
 		$this->testee->run();
@@ -170,7 +170,7 @@ class PluginTest extends TestCase {
 			'plugin_basename',
 			[],
 			1,
-			'login-with-google'
+			'oauth-login'
 		);
 
 		$this->testee->run();
@@ -212,7 +212,7 @@ class PluginTest extends TestCase {
 			'plugin_basename',
 			[],
 			1,
-			'login-with-google'
+			'oauth-login'
 		);
 
 		$this->testee->run();
@@ -283,7 +283,7 @@ class PluginTest extends TestCase {
 			'plugin_basename',
 			[],
 			2,
-			'login-with-google'
+			'oauth-login'
 		);
 
 		WP_Mock::expectActionAdded( 'init', [ $this->testee, 'load_translations' ] );
@@ -315,7 +315,7 @@ class PluginTest extends TestCase {
 		);
 
 		$this->wpMockFunction(
-			'RtCamp\GoogleLogin\plugin',
+			'Circularlizard\OAuthLogin\plugin',
 			[],
 			1,
 			function () {
@@ -328,7 +328,7 @@ class PluginTest extends TestCase {
 		$this->wpMockFunction(
 			'load_plugin_textdomain',
 			[
-				'login-with-google',
+				'oauth-login',
 				false,
 				'path-to-test/languages/en_US'
 			]

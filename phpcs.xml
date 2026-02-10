@@ -1,12 +1,12 @@
 <?xml version="1.0" ?>
-<ruleset name="Login with github">
+<ruleset name="OAuth Login">
     <config name="minimum_supported_wp_version" value="5.4.2" />
     <!-- Check for PHP cross-version compatibility. -->
-    <config name="testVersion" value="7.1-"/>
+    <config name="testVersion" value="7.4-"/>
     <rule ref="PHPCompatibilityWP"/>
 
     <file>src</file>
-    <file>login-with-google.php</file>
+    <file>oauth-login.php</file>
 
     <rule ref="WordPress-Core">
         <exclude name="Universal.Operators.DisallowShortTernary" />
@@ -26,7 +26,7 @@
     <rule ref="WordPress.WP.I18n">
         <properties>
             <property name="text_domain" type="array">
-                <element value="login-with-google" />
+                <element value="oauth-login" />
             </property>
         </properties>
     </rule>

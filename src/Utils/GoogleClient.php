@@ -4,20 +4,20 @@
  *
  * Useful for authenticating the user and other API related operations.
  *
- * @package RtCamp\GoogleLogin
+ * @package Circularlizard\OAuthLogin
  * @since 1.0.0
  */
 
 declare(strict_types=1);
 
-namespace RtCamp\GoogleLogin\Utils;
+namespace Circularlizard\OAuthLogin\Utils;
 
 use Exception;
 
 /**
  * Class GoogleClient
  *
- * @package RtCamp\GoogleLogin\Utils
+ * @package Circularlizard\OAuthLogin\Utils
  */
 class GoogleClient {
 	/**
@@ -95,7 +95,7 @@ class GoogleClient {
 		];
 
 		if ( in_array( $name, $methods, true ) && empty( $this->access_token ) ) {
-			throw new Exception( esc_html__( 'Access token must be set to make this API call', 'login-with-google' ) );
+			throw new Exception( esc_html__( 'Access token must be set to make this API call', 'oauth-login' ) );
 		}
 	}
 
@@ -201,7 +201,7 @@ class GoogleClient {
 		);
 
 		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
-			throw new Exception( esc_html__( 'Could not retrieve the access token, please try again.', 'login-with-google' ) );
+			throw new Exception( esc_html__( 'Could not retrieve the access token, please try again.', 'oauth-login' ) );
 		}
 
 		return json_decode( wp_remote_retrieve_body( $response ) );
@@ -227,7 +227,7 @@ class GoogleClient {
 			);
 
 			if ( 200 !== wp_remote_retrieve_response_code( $user ) ) {
-				throw new Exception( esc_html__( 'Could not retrieve the user information, please try again.', 'login-with-google' ) );
+				throw new Exception( esc_html__( 'Could not retrieve the user information, please try again.', 'oauth-login' ) );
 			}
 
 			return json_decode( wp_remote_retrieve_body( $user ) );

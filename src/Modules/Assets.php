@@ -5,21 +5,21 @@
  * This will manage the assets file (css/js)
  * for adding style and JS functionality.
  *
- * @package RtCamp\GoogleLogin
+ * @package Circularlizard\OAuthLogin
  * @since   1.0.0
  */
 
 declare( strict_types=1 );
 
-namespace RtCamp\GoogleLogin\Modules;
+namespace Circularlizard\OAuthLogin\Modules;
 
-use RtCamp\GoogleLogin\Interfaces\Module as ModuleInterface;
-use function RtCamp\GoogleLogin\plugin;
+use Circularlizard\OAuthLogin\Interfaces\Module as ModuleInterface;
+use function Circularlizard\OAuthLogin\plugin;
 
 /**
  * Class Assets
  *
- * @package RtCamp\GoogleLogin\Modules
+ * @package Circularlizard\OAuthLogin\Modules
  */
 class Assets implements ModuleInterface {
 
@@ -28,7 +28,7 @@ class Assets implements ModuleInterface {
 	 *
 	 * @var string
 	 */
-	const LOGIN_BUTTON_STYLE_HANDLE = 'login-with-google';
+	const LOGIN_BUTTON_STYLE_HANDLE = 'oauth-login';
 
 	/**
 	 * Module name.

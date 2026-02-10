@@ -4,13 +4,13 @@
  *
  * This class has been taken from Login with Google plugin.
  *
- * @package RtCamp\GoogleLogin
+ * @package Circularlizard\OAuthLogin
  * @since 1.0.0
  */
 
 declare(strict_types=1);
 
-namespace RtCamp\GoogleLogin\Utils;
+namespace Circularlizard\OAuthLogin\Utils;
 
 /**
  * Class Helper

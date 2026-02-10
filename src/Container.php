@@ -7,31 +7,33 @@
  * useful for defining services and serves as service
  * locator.
  *
- * @package RtCamp\GoogleLogin
+ * @package Circularlizard\OAuthLogin
  * @since 1.0.0
  */
 
 declare(strict_types=1);
 
-namespace RtCamp\GoogleLogin;
+namespace Circularlizard\OAuthLogin;
 
-use RtCamp\GoogleLogin\Interfaces\Container as ContainerInterface;
+use Circularlizard\OAuthLogin\Interfaces\Container as ContainerInterface;
 use Pimple\Container as PimpleContainer;
 use InvalidArgumentException;
-use RtCamp\GoogleLogin\Modules\Assets;
-use RtCamp\GoogleLogin\Modules\Block;
-use RtCamp\GoogleLogin\Modules\Login;
-use RtCamp\GoogleLogin\Modules\OneTapLogin;
-use RtCamp\GoogleLogin\Modules\Settings;
-use RtCamp\GoogleLogin\Utils\Authenticator;
-use RtCamp\GoogleLogin\Utils\GoogleClient;
-use RtCamp\GoogleLogin\Modules\Shortcode;
-use RtCamp\GoogleLogin\Utils\TokenVerifier;
+use Circularlizard\OAuthLogin\Modules\Assets;
+use Circularlizard\OAuthLogin\Modules\Block;
+use Circularlizard\OAuthLogin\Modules\Login;
+use Circularlizard\OAuthLogin\Modules\OneTapLogin;
+use Circularlizard\OAuthLogin\Modules\Settings;
+use Circularlizard\OAuthLogin\Utils\Authenticator;
+use Circularlizard\OAuthLogin\Utils\GoogleClient;
+use Circularlizard\OAuthLogin\Modules\Shortcode;
+use Circularlizard\OAuthLogin\Utils\TokenVerifier;
+use Circularlizard\OAuthLogin\Utils\ProviderRegistry;
+use Circularlizard\OAuthLogin\Providers\GoogleProvider;
 
 /**
  * Class Container
  *
- * @package RtCamp\GoogleLogin
+ * @package Circularlizard\OAuthLogin
  */
 class Container implements ContainerInterface {
 	/**
@@ -63,7 +65,7 @@ class Container implements ContainerInterface {
 		if ( ! in_array( $service, $this->container->keys(), true ) ) {
 			$error_message = sprintf(
 				/* translators: %$s is replaced with requested service name. */
-				__( 'Invalid Service %s Passed to the container', 'login-with-google' ),
+				__( 'Invalid Service %s Passed to the container', 'oauth-login' ),
 				$service
 			);
 
@@ -189,6 +191,36 @@ class Container implements ContainerInterface {
 			return new Block( $c['assets'], $c['gh_client'] );
 		};
 
+
+		/**
+		 * Define Provider Registry service.
+		 *
+		 * @param PimpleContainer $c Pimple container object.
+		 *
+		 * @return ProviderRegistry
+		 */
+		$this->container['provider_registry'] = function ( PimpleContainer $c ) {
+			$registry = new ProviderRegistry();
+			$settings = $c['settings'];
+
+			// Register Google provider.
+			$google = new GoogleProvider(
+				$settings->client_id ?? '',
+				$settings->client_secret ?? ''
+			);
+			$registry->register( $google );
+
+			/**
+			 * Allow third-party providers to register.
+			 *
+			 * @param ProviderRegistry $registry Provider registry instance.
+			 *
+			 * @since 2.0.0
+			 */
+			do_action( 'oauth.register_providers', $registry );
+
+			return $registry;
+		};
 
 		/**
 		 * Define any additional services.

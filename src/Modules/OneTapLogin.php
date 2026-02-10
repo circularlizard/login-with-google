@@ -5,26 +5,26 @@
  * This class will be responsible for handling
  * Google's one tap login for web functioning.
  *
- * @package RtCamp\GoogleLogin\Modules
+ * @package Circularlizard\OAuthLogin\Modules
  * @since 1.0.16
  */
 
 declare(strict_types=1);
 
-namespace RtCamp\GoogleLogin\Modules;
+namespace Circularlizard\OAuthLogin\Modules;
 
 use Exception;
-use RtCamp\GoogleLogin\Utils\Authenticator;
-use RtCamp\GoogleLogin\Utils\GoogleClient;
-use RtCamp\GoogleLogin\Utils\Helper;
-use RtCamp\GoogleLogin\Interfaces\Module;
-use RtCamp\GoogleLogin\Utils\TokenVerifier;
-use function RtCamp\GoogleLogin\plugin;
+use Circularlizard\OAuthLogin\Utils\Authenticator;
+use Circularlizard\OAuthLogin\Utils\GoogleClient;
+use Circularlizard\OAuthLogin\Utils\Helper;
+use Circularlizard\OAuthLogin\Interfaces\Module;
+use Circularlizard\OAuthLogin\Utils\TokenVerifier;
+use function Circularlizard\OAuthLogin\plugin;
 
 /**
  * Class OneTapLogin
  *
- * @package RtCamp\GoogleLogin\Modules
+ * @package Circularlizard\OAuthLogin\Modules
  */
 class OneTapLogin implements Module {
 	/**
@@ -169,7 +169,7 @@ class OneTapLogin implements Module {
 		// @see https://make.wordpress.org/core/2018/11/09/new-javascript-i18n-support-in-wordpress/
 		// @see https://developer.wordpress.org/reference/functions/wp_set_script_translations/
 		if ( function_exists( 'wp_set_script_translations' ) ) {
-			wp_set_script_translations( 'login-with-google-one-tap-js', 'login-with-google' );
+			wp_set_script_translations( 'login-with-google-one-tap-js', 'oauth-login' );
 		}
 	}
 
@@ -185,7 +185,7 @@ class OneTapLogin implements Module {
 			$verified = $this->token_verifier->verify_token( $token );
 
 			if ( ! $verified ) {
-				throw new Exception( __( 'Cannot verify the credentials', 'login-with-google' ) );
+				throw new Exception( __( 'Cannot verify the credentials', 'oauth-login' ) );
 			}
 
 			/**
@@ -227,7 +227,7 @@ class OneTapLogin implements Module {
 		$user = $this->token_verifier->current_user();
 
 		if ( is_null( $user ) ) {
-			throw new Exception( esc_html__( 'User not found to authenticate', 'login-with-google' ) );
+			throw new Exception( esc_html__( 'User not found to authenticate', 'oauth-login' ) );
 		}
 
 		$wp_user = $this->authenticator->authenticate( $user );

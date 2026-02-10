@@ -8,7 +8,7 @@
 
 declare(strict_types=1);
 
-namespace RtCamp\GoogleLogin\Tests;
+namespace Circularlizard\OAuthLogin\Tests;
 
 use WP_Mock\Tools\TestCase as WPMockTestCase;
 use ReflectionException;
@@ -163,8 +163,12 @@ class TestCase extends WPMockTestCase
 			$funcArgs['args'] = $args;
 		}
 
-		if (!empty($return)) {
+		// Always set return value to avoid PHP 8.5 strict return type issues.
+		// Use empty string as default for functions that return string.
+		if ($return !== null) {
 			$funcArgs['return'] = $return;
+		} else {
+			$funcArgs['return'] = '';
 		}
 
 		\WP_Mock::userFunction(

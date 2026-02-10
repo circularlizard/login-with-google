@@ -2,24 +2,24 @@
 /**
  * Tests for token verifier.
  *
- * @package RtCamp\GoogleLogin
+ * @package Circularlizard\OAuthLogin
  */
 
 declare(strict_types=1);
 
-namespace RtCamp\GoogleLogin\Tests\Unit\Utils;
+namespace Circularlizard\OAuthLogin\Tests\Unit\Utils;
 
-use RtCamp\GoogleLogin\Modules\Settings;
-use RtCamp\GoogleLogin\Tests\PrivateAccess;
-use RtCamp\GoogleLogin\Tests\TestCase;
-use RtCamp\GoogleLogin\Utils\TokenVerifier as Testee;
+use Circularlizard\OAuthLogin\Modules\Settings;
+use Circularlizard\OAuthLogin\Tests\PrivateAccess;
+use Circularlizard\OAuthLogin\Tests\TestCase;
+use Circularlizard\OAuthLogin\Utils\TokenVerifier as Testee;
 
 /**
  * Class TokenVerifierTest
  *
- * @coversDefaultClass \RtCamp\GoogleLogin\Utils\TokenVerifier
+ * @coversDefaultClass \Circularlizard\OAuthLogin\Utils\TokenVerifier
  *
- * @package RtCamp\GoogleLogin\Tests\Unit\Utils
+ * @package Circularlizard\OAuthLogin\Tests\Unit\Utils
  */
 class TokenVerifierTest extends TestCase {
 
@@ -28,7 +28,7 @@ class TokenVerifierTest extends TestCase {
 	/**
 	 * Object under test.
 	 *
-	 * @var \RtCamp\GoogleLogin\Utils\TokenVerifier
+	 * @var \Circularlizard\OAuthLogin\Utils\TokenVerifier
 	 */
 	private $testee;
 
