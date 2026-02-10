@@ -12,12 +12,12 @@ namespace Circularlizard\OAuthLogin\Tests\Unit\Utils;
 use Circularlizard\OAuthLogin\Modules\Settings;
 use Circularlizard\OAuthLogin\Tests\PrivateAccess;
 use Circularlizard\OAuthLogin\Tests\TestCase;
-use Circularlizard\OAuthLogin\Utils\TokenVerifier as Testee;
+use Circularlizard\OAuthLogin\Providers\Google\TokenVerifier as Testee;
 
 /**
  * Class TokenVerifierTest
  *
- * @coversDefaultClass \Circularlizard\OAuthLogin\Utils\TokenVerifier
+ * @coversDefaultClass \Circularlizard\OAuthLogin\Providers\Google\TokenVerifier
  *
  * @package Circularlizard\OAuthLogin\Tests\Unit\Utils
  */
