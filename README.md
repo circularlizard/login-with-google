@@ -1,9 +1,10 @@
-# Login with Google
+# OAuth Login
 
-> WordPress plugin to login/register with Google
+> WordPress plugin to login/register via OAuth 2.0 providers (Google and more)
 
-- [Login with Google](#login-with-google)
+- [OAuth Login](#oauth-login)
   - [Overview](#overview)
+  - [Features](#features)
   - [Installation](#installation)
   - [Browser support](#browser-support)
   - [Usage Instructions](#usage-instructions)
@@ -12,18 +13,27 @@
       - [Filters](#filters)
       - [Actions](#actions)
   - [Shortcode](#shortcode)
+  - [Adding Custom Providers](#adding-custom-providers)
   - [Contribute](#contribute)
   - [Unit testing](#unit-testing)
   - [Code Snippets](#code-snippets)
   - [Minimum Requirements](#minimum-requirements)
   - [License](#license)
-  - [BTW, We're Hiring!](#btw-were-hiring)
 
 ## Overview
 
-Login with Google provides seamless experience for users to login in to WordPress
-sites using their Google account. No need to manually create accounts, no need to remember quirky
-passwords. Just one click and land into the site!
+OAuth Login provides a seamless experience for users to login to WordPress
+sites using their OAuth 2.0 provider accounts. Currently supports Google with an extensible
+architecture for adding additional providers.
+
+## Features
+
+- **Google OAuth 2.0** - Login with Google accounts
+- **One Tap Login** - Google's streamlined one-tap authentication
+- **Extensible Provider System** - Add custom OAuth providers via hooks
+- **Shortcode & Block** - Embed login buttons anywhere
+- **Whitelisted Domains** - Restrict registration to specific email domains
+- **WP-CLI Support** - Configure via constants or wp-config.php
 
 ## Installation
 
@@ -46,7 +56,7 @@ passwords. Just one click and land into the site!
 `https://yourdomain.com` will be replaced by your site URL.
 
 3. Once you create the app, you will receive the `Client ID` and `Client Secret`, add these credentials
-in `Settings > Login with Google` settings page in their respective fields.
+in `Settings > OAuth Login` settings page in their respective fields.
 
 4. `Create new user` enables new user registration irrespective of `Membership` settings in
    `Settings > General`; as sometimes enabling user registration can lead to lots of spam users.
@@ -112,7 +122,7 @@ You can add the Google login button to any page/post using shortcode: `google_lo
 
 **Example:**
 ```php
-[google_login button_text="Google Login" force_display="yes" /]
+[google_login button_text="Login with Google" force_display="yes" /]
 ```
 
 **Supported attributes for shortcode**
@@ -123,6 +133,19 @@ You can add the Google login button to any page/post using shortcode: `google_lo
 | force_display  | Whether to display button when user is already logged in      | yes/no | no                 |
 | redirect_to    | URL where user should be redirected post login                | URL    | `wp-admin`         |
 
+## Adding Custom Providers
+
+You can register additional OAuth providers using the `oauth.register_providers` action:
+
+```php
+add_action( 'oauth.register_providers', function( $registry ) {
+    // Register a custom provider that implements OAuthProvider interface
+    $registry->register( new MyCustomProvider( $client_id, $client_secret ) );
+});
+```
+
+Your custom provider must implement the `Circularlizard\OAuthLogin\Interfaces\OAuthProvider` interface.
+
 ## Contribute
 - For contributing to this plugin, please refer to [CONTRIBUTING.md](docs/CONTRIBUTING.md) for more details.
 
@@ -132,7 +155,7 @@ Unit tests can be run with simple command `composer tests:unit`.
 Please note that you'll need to do `composer install` (need to install dev dependencies) for running
 unit tests.
 
-You should have PHP CLI > 7.1 installed. If you have Xdebug enabled with php, code coverage report will be
+You should have PHP CLI >= 7.4 installed. If you have Xdebug enabled with php, code coverage report will be
 generated at `/tmp/report/html`
 
 ## Code Snippets
@@ -149,6 +172,6 @@ PHP >= 7.4
 This library is released under
 ["GPL 2.0 or later" License](LICENSE).
 
-## BTW, We're Hiring!
+## Credits
 
-<a href="https://rtcamp.com/"><img src="https://rtcamp.com/wp-content/uploads/sites/2/2019/04/github-banner@2x.png" alt="Join us at rtCamp, we specialize in providing high performance enterprise WordPress solutions"></a>
+This plugin is a fork of [Login with Google](https://github.com/rtCamp/login-with-google) by rtCamp.
