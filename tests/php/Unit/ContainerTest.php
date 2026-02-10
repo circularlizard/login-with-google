@@ -82,4 +82,67 @@ class ContainerTest extends  TestCase {
 
 		$this->testee->get( 'test_service' );
 	}
+
+	/**
+	 * @covers ::get
+	 */
+	public function testGetProviderRegistryService() {
+		$dummyRegistry = (object) [
+			'providers' => [],
+		];
+
+		$this->pimpleMock->expects( $this->once() )
+		                        ->method( 'keys' )
+		                        ->willReturn( [ 'provider_registry' ] );
+
+		$this->pimpleMock->expects( $this->once() )
+		                        ->method( 'offsetGet' )
+		                        ->with( 'provider_registry' )
+		                        ->willReturn( $dummyRegistry );
+
+		$result = $this->testee->get( 'provider_registry' );
+		$this->assertSame( $dummyRegistry, $result );
+	}
+
+	/**
+	 * @covers ::get
+	 */
+	public function testGetGoogleOneTapLoginService() {
+		$dummyOneTap = (object) [
+			'name' => 'google_one_tap_login',
+		];
+
+		$this->pimpleMock->expects( $this->once() )
+		                        ->method( 'keys' )
+		                        ->willReturn( [ 'google_one_tap_login' ] );
+
+		$this->pimpleMock->expects( $this->once() )
+		                        ->method( 'offsetGet' )
+		                        ->with( 'google_one_tap_login' )
+		                        ->willReturn( $dummyOneTap );
+
+		$result = $this->testee->get( 'google_one_tap_login' );
+		$this->assertSame( $dummyOneTap, $result );
+	}
+
+	/**
+	 * @covers ::get
+	 */
+	public function testGetGoogleTokenVerifierService() {
+		$dummyVerifier = (object) [
+			'name' => 'google_token_verifier',
+		];
+
+		$this->pimpleMock->expects( $this->once() )
+		                        ->method( 'keys' )
+		                        ->willReturn( [ 'google_token_verifier' ] );
+
+		$this->pimpleMock->expects( $this->once() )
+		                        ->method( 'offsetGet' )
+		                        ->with( 'google_token_verifier' )
+		                        ->willReturn( $dummyVerifier );
+
+		$result = $this->testee->get( 'google_token_verifier' );
+		$this->assertSame( $dummyVerifier, $result );
+	}
 }
