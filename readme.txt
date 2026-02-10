@@ -1,20 +1,19 @@
-=== Log in with Google ===
-Contributors: rtCamp, sh4lin, nikhiljoshua, mchirag2002, mi5t4n
-Unlinked contributors: Jeppehimer, dev-alamin
-Donate link: https://rtcamp.com/
-Tags: Google login, sign in, sso, oauth, authentication, sign-in, single sign-on, log in
+=== OAuth Login ===
+Contributors: Circularlizard
+Donate link: https://github.com/circularlizard
+Tags: OAuth, Google login, sign in, sso, oauth2, authentication, sign-in, single sign-on, log in
 Requires at least: 5.5
 Tested up to: 6.7.2
 Requires PHP: 7.4
-Stable tag: 1.4.2
+Stable tag: 2.0.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Minimal plugin that allows WordPress users to log in using Google.
+Generic OAuth 2.0 login plugin with built-in Google support.
 
 == Description ==
 
-Ultra minimal plugin to let your users login to WordPress applications using their Google accounts. No more remembering hefty passwords!
+OAuth Login allows WordPress users to authenticate using OAuth 2.0 providers. Currently supports Google with an extensible architecture for adding custom providers. No more remembering hefty passwords!
 
 ### Initial Setup
 
