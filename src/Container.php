@@ -21,12 +21,12 @@ use InvalidArgumentException;
 use Circularlizard\OAuthLogin\Modules\Assets;
 use Circularlizard\OAuthLogin\Modules\Block;
 use Circularlizard\OAuthLogin\Modules\Login;
-use Circularlizard\OAuthLogin\Modules\OneTapLogin;
+use Circularlizard\OAuthLogin\Providers\Google\OneTapLogin as GoogleOneTapLogin;
+use Circularlizard\OAuthLogin\Providers\Google\TokenVerifier as GoogleTokenVerifier;
 use Circularlizard\OAuthLogin\Modules\Settings;
 use Circularlizard\OAuthLogin\Utils\Authenticator;
 use Circularlizard\OAuthLogin\Utils\GoogleClient;
 use Circularlizard\OAuthLogin\Modules\Shortcode;
-use Circularlizard\OAuthLogin\Utils\TokenVerifier;
 use Circularlizard\OAuthLogin\Utils\ProviderRegistry;
 use Circularlizard\OAuthLogin\Providers\GoogleProvider;
 
@@ -146,27 +146,37 @@ class Container implements ContainerInterface {
 		};
 
 		/**
-		 * Define Token Verifier Service.
+		 * Define Google Token Verifier Service.
 		 *
-		 * Useful in verifying JWT Auth token.
+		 * Useful in verifying JWT Auth token for Google.
 		 *
 		 * @param PimpleContainer $c Pimple container object.
 		 *
-		 * @return TokenVerifier
+		 * @return GoogleTokenVerifier
 		 */
+		$this->container['google_token_verifier'] = function ( PimpleContainer $c ) {
+			return new GoogleTokenVerifier( $c['settings'] );
+		};
+
+		// Backward compatibility alias.
 		$this->container['token_verifier'] = function ( PimpleContainer $c ) {
-			return new TokenVerifier( $c['settings'] );
+			return $c['google_token_verifier'];
 		};
 
 		/**
-		 * One Tap Login Service.
+		 * Google One Tap Login Service.
 		 *
 		 * @param PimpleContainer $c Pimple container object.
 		 *
-		 * @return OneTapLogin
+		 * @return GoogleOneTapLogin
 		 */
+		$this->container['google_one_tap_login'] = function ( PimpleContainer $c ) {
+			return new GoogleOneTapLogin( $c['settings'], $c['google_token_verifier'], $c['gh_client'], $c['authenticator'] );
+		};
+
+		// Backward compatibility alias.
 		$this->container['one_tap_login'] = function ( PimpleContainer $c ) {
-			return new OneTapLogin( $c['settings'], $c['token_verifier'], $c['gh_client'], $c['authenticator'] );
+			return $c['google_one_tap_login'];
 		};
 
 		/**
