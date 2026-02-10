@@ -148,8 +148,8 @@ class SettingsTest extends TestCase {
 		$this->wpMockFunction(
 			'add_options_page',
 			[
-				'Login with Google settings',
-				'Login with Google',
+				'OAuth Login Settings',
+				'OAuth Login',
 				'manage_options',
 				'oauth-login',
 				[

@@ -99,7 +99,7 @@ class ShortCodeTest extends TestCase {
 			[
 				'args'       => [
 					[
-						'button_text'   => __( 'Login with google', 'oauth-login' ),
+						'button_text'   => __( 'Login with Google', 'oauth-login' ),
 						'force_display' => 'no',
 						'redirect_to'   => 'https://example.com/',
 					],
@@ -145,7 +145,7 @@ class ShortCodeTest extends TestCase {
 			[
 				'args'       => [
 					[
-						'button_text'   => __( 'Login with google', 'oauth-login' ),
+						'button_text'   => __( 'Login with Google', 'oauth-login' ),
 						'force_display' => 'no',
 						'redirect_to'   => 'https://example.com/',
 					],
