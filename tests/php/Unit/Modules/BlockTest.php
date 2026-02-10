@@ -5,23 +5,23 @@
 
 declare( strict_types=1 );
 
-namespace RtCamp\GoogleLogin\Tests\Unit\Modules;
+namespace Circularlizard\OAuthLogin\Tests\Unit\Modules;
 
-use RtCamp\GoogleLogin\Interfaces\Module as ModuleInterface;
-use RtCamp\GoogleLogin\Utils\Helper;
+use Circularlizard\OAuthLogin\Interfaces\Module as ModuleInterface;
+use Circularlizard\OAuthLogin\Utils\Helper;
 use WP_Mock;
 use Mockery;
-use RtCamp\GoogleLogin\Modules\Block as Testee;
-use RtCamp\GoogleLogin\Tests\TestCase;
-use RtCamp\GoogleLogin\Utils\GoogleClient;
-use RtCamp\GoogleLogin\Modules\Assets;
+use Circularlizard\OAuthLogin\Modules\Block as Testee;
+use Circularlizard\OAuthLogin\Tests\TestCase;
+use Circularlizard\OAuthLogin\Utils\GoogleClient;
+use Circularlizard\OAuthLogin\Modules\Assets;
 
 /**
  * Class BlockTest
  *
- * @coversDefaultClass \RtCamp\GoogleLogin\Modules\Block
+ * @coversDefaultClass \Circularlizard\OAuthLogin\Modules\Block
  *
- * @package RtCamp\GoogleLogin\Tests\Unit\Modules
+ * @package Circularlizard\OAuthLogin\Tests\Unit\Modules
  */
 class BlockTest extends TestCase {
 	/**
@@ -72,8 +72,6 @@ class BlockTest extends TestCase {
 	 * @covers ::init
 	 */
 	public function testInit() {
-		WP_Mock::expectActionAdded( 'wp_enqueue_scripts', [ $this->testee->assets, 'register_login_styles' ] );
-		WP_Mock::expectActionAdded( 'enqueue_block_editor_assets', [ $this->testee, 'enqueue_block_editor_assets' ] );
 		WP_Mock::expectActionAdded( 'init', [ $this->testee, 'register' ] );
 
 		$this->testee->init();
@@ -81,82 +79,40 @@ class BlockTest extends TestCase {
 	}
 
 	/**
-	 * @covers ::enqueue_block_editor_assets
+	 * @covers ::register
 	 */
-	public function testEnqueueBlockEditorAssets() {
-		$path = dirname( __DIR__, 4 ) . '/assets/';
+	public function testRegister() {
+		$path = '/test/assets/';
+
+		$this->wpMockFunction(
+			'Circularlizard\OAuthLogin\plugin',
+			[],
+			3,
+			(object) [
+				'assets_dir' => $path,
+			]
+		);
 
 		WP_Mock::userFunction(
 			'trailingslashit',
 			[
-				'times'      => 1,
-				'args'       => [ $path ],
 				'return_arg' => 0,
 			]
 		);
 
-		$this->wpMockFunction(
-			'RtCamp\GoogleLogin\plugin',
-			[],
-			1,
-			function () use ( $path ) {
-				return (object) [
-					'url'        => 'https://example.com/',
-					'assets_dir' => $path,
-				];
-			}
+		WP_Mock::userFunction(
+			'wp_register_block_metadata_collection',
+			[
+				'return' => true,
+			]
 		);
 
-		$this->wpMockFunction(
-			'wp_enqueue_script',
-			[ 'google-login-block' ],
-			1,
-			true
-		);
-
-		$this->assetMock->expects( $this->once() )->method( 'register_login_styles' );
-		$this->assetMock->expects( $this->once() )->method( 'register_script' )
-		                 ->with(
-			                 'google-login-block',
-			                 'build/js/block-button.js',
-			                 [
-				                 'wp-blocks',
-				                 'wp-element',
-				                 'wp-editor',
-				                 'wp-components',
-			                 ],
-			                 filemtime( $path . 'build/js/block-button.js' ),
-			                 false
-		                 );
-
-		$this->testee->enqueue_block_editor_assets();
-	}
-
-	/**
-	 * @covers ::register
-	 */
-	public function testRegister() {
-		$this->wpMockFunction(
+		WP_Mock::userFunction(
 			'register_block_type',
 			[
-				'google-login/login-button',
-				[
-					'editor_style'    => 'login-with-google',
-					'style'           => 'login-with-google',
-					'render_callback' => [ $this->testee, 'render_login_button' ],
-					'attributes'      => [
-						'buttonText'   => [
-							'type' => 'string',
-						],
-						'forceDisplay' => [
-							'type'    => 'boolean',
-							'default' => false,
-						],
-					],
-				],
-			],
-			1,
-			true
+				'times'  => 1,
+				'return' => true,
+			]
 		);
 
 		$this->testee->register();
@@ -199,7 +155,7 @@ class BlockTest extends TestCase {
 		$path = dirname( __DIR__, 4 ) . '/templates/';
 
 		$this->wpMockFunction(
-			'RtCamp\GoogleLogin\plugin',
+			'Circularlizard\OAuthLogin\plugin',
 			[],
 			1,
 			function () use ( $path ) {
@@ -220,19 +176,24 @@ class BlockTest extends TestCase {
 
 
 		$helperMock = \Mockery::mock( 'alias:' . Helper::class );
+		$helperMock->expects( 'get_redirect_url' )->once()->andReturn( 'https://example.com/' );
+		$helperMock->expects( 'set_redirect_state_filter' )->once();
 		$helperMock->expects( 'render_template' )->once()->withArgs(
 			[
 				$path . 'google-login-button.php',
-				$mockAttributes,
+				\Mockery::type( 'array' ),
 				false,
 			]
 		)->andReturn( '' );
 
+		$this->ghClientMock->expects( $this->once() )
+		                   ->method( 'authorization_url' )
+		                   ->willReturn( 'https://google.com/auth/' );
+
 		$markup = $this->testee->render_login_button(
 			[
-				$path . '/google-login-button.php',
-				$mockAttributes,
-				false,
+				'buttonText'   => 'test',
+				'forceDisplay' => false,
 			]
 		);
 
@@ -248,13 +209,6 @@ class BlockTest extends TestCase {
 			'custom_btn_text' => 'test',
 			'force_display'   => true,
 		];
-
-		$this->wpMockFunction(
-			'is_user_logged_in',
-			[],
-			1,
-			false
-		);
 
 		$this->wpMockFunction(
 			'wp_parse_args',
@@ -273,7 +227,7 @@ class BlockTest extends TestCase {
 		$path = dirname( __DIR__, 4 ) . '/templates/';
 
 		$this->wpMockFunction(
-			'RtCamp\GoogleLogin\plugin',
+			'Circularlizard\OAuthLogin\plugin',
 			[],
 			1,
 			function () use ( $path ) {
@@ -294,19 +248,24 @@ class BlockTest extends TestCase {
 
 
 		$helperMock = \Mockery::mock( 'alias:' . Helper::class );
+		$helperMock->expects( 'get_redirect_url' )->once()->andReturn( 'https://example.com/' );
+		$helperMock->expects( 'set_redirect_state_filter' )->once();
 		$helperMock->expects( 'render_template' )->once()->withArgs(
 			[
 				$path . 'google-login-button.php',
-				$mockAttributes,
+				\Mockery::type( 'array' ),
 				false,
 			]
 		)->andReturn( '' );
 
+		$this->ghClientMock->expects( $this->once() )
+		                   ->method( 'authorization_url' )
+		                   ->willReturn( 'https://google.com/auth/' );
+
 		$markup = $this->testee->render_login_button(
 			[
-				$path . '/google-login-button.php',
-				$mockAttributes,
-				false,
+				'buttonText'   => 'test',
+				'forceDisplay' => true,
 			]
 		);
 

@@ -11,7 +11,7 @@ use RtCamp\GoogleLogin\Utils\Helper;
 if ( isset( $custom_btn_text ) && $custom_btn_text ) {
 	$button_text = esc_html( $custom_btn_text );
 } else {
-	$button_text = ( ! empty( $button_text ) ) ? $button_text : __( 'Login with Google', 'login-with-google' );
+	$button_text = ( ! empty( $button_text ) ) ? $button_text : __( 'Login with Google', 'oauth-login' );
 }
 
 if ( empty( $login_url ) ) {
@@ -21,7 +21,7 @@ if ( empty( $login_url ) ) {
 $button_url = $login_url;
 
 if ( is_user_logged_in() ) {
-	$button_text  = __( 'Log out', 'login-with-google' );
+	$button_text  = __( 'Log out', 'oauth-login' );
 	$redirect_url = Helper::get_redirect_url();
 	$button_url   = wp_logout_url( $redirect_url );
 }

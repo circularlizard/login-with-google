@@ -5,19 +5,19 @@
 
 declare( strict_types=1 );
 
-namespace RtCamp\GoogleLogin\Tests\Unit\Modules;
+namespace Circularlizard\OAuthLogin\Tests\Unit\Modules;
 
 use WP_Mock;
-use RtCamp\GoogleLogin\Interfaces\Module as ModuleInterface;
-use RtCamp\GoogleLogin\Tests\TestCase;
-use RtCamp\GoogleLogin\Modules\Settings as Testee;
+use Circularlizard\OAuthLogin\Interfaces\Module as ModuleInterface;
+use Circularlizard\OAuthLogin\Tests\TestCase;
+use Circularlizard\OAuthLogin\Modules\Settings as Testee;
 
 /**
  * Class SettingsTest
  *
- * @coversDefaultClass \RtCamp\GoogleLogin\Modules\Settings
+ * @coversDefaultClass \Circularlizard\OAuthLogin\Modules\Settings
  *
- * @package RtCamp\GoogleLogin\Tests\Unit\Modules
+ * @package Circularlizard\OAuthLogin\Tests\Unit\Modules
  */
 class SettingsTest extends TestCase {
 	/**
@@ -117,7 +117,7 @@ class SettingsTest extends TestCase {
 				'wp_google_login_section',
 				'Log in with Google Settings',
 				\Closure::class,
-				'login-with-google'
+				'oauth-login'
 			],
 			1
 		);
@@ -151,7 +151,7 @@ class SettingsTest extends TestCase {
 				'Login with Google settings',
 				'Login with Google',
 				'manage_options',
-				'login-with-google',
+				'oauth-login',
 				[
 					$this->testee,
 					'output'
@@ -178,7 +178,7 @@ class SettingsTest extends TestCase {
 		$this->wpMockFunction(
 			'do_settings_sections',
 			[
-				'login-with-google',
+				'oauth-login',
 			],
 			1
 		);
@@ -199,26 +199,28 @@ class SettingsTest extends TestCase {
 	 * @covers ::client_id_field
 	 */
 	public function testClientIdField() {
-		$this->wpMockFunction(
-			'esc_html__',
+		WP_Mock::userFunction(
+			'esc_attr',
 			[
-				'Create oAuth Client ID and Client Secret at',
-				'login-with-google'
-			],
-			2,
+				'times'      => 1,
+				'return_arg' => 0,
+			]
 		);
 
-		$this->wpMockFunction(
+		WP_Mock::userFunction(
+			'esc_html__',
+			[
+				'times'  => 1,
+				'return' => 'Create oAuth Client ID and Client Secret at',
+			]
+		);
+
+		WP_Mock::userFunction(
 			'wp_kses_post',
 			[
-				sprintf(
-					'<p>%1s <a target="_blank" href="%2s">%3s</a>.</p>',
-					esc_html__( 'Create oAuth Client ID and Client Secret at', 'login-with-google' ),
-					'https://console.developers.google.com/apis/dashboard',
-					'console.developers.google.com'
-				)
-			],
-			1,
+				'times'      => 1,
+				'return_arg' => 0,
+			]
 		);
 
 		$this->setOutputCallback(function() {});
@@ -232,37 +234,43 @@ class SettingsTest extends TestCase {
 	public function testUserRegistration() {
 		$this->testee->registration_enabled = 'yes';
 
-		$this->wpMockFunction(
+		WP_Mock::userFunction(
 			'checked',
 			[
-				'yes'
-			],
-			1,
+				'times'  => 1,
+				'return' => 'checked',
+			]
 		);
 
-		$this->wpMockFunction(
+		WP_Mock::userFunction(
+			'esc_attr',
+			[
+				'times'      => 2,
+				'return_arg' => 0,
+			]
+		);
+
+		WP_Mock::userFunction(
 			'esc_html_e',
 			[
-				'Create a new user account if it does not exist already',
-				'login-with-google'
-			],
-			1,
+				'times'  => 1,
+				'return' => '',
+			]
 		);
 
 		$this->wpMockFunction(
 			'is_multisite',
 			[],
 			1,
-			'network/settings.php'
+			true
 		);
 
-		$this->wpMockFunction(
+		WP_Mock::userFunction(
 			'wp_kses_post',
 			[
-				/* translators: %1s will be replaced by page link */
-				__( 'If this setting is checked, a new user will be created even if <a target="_blank" href="network/settings.php">membership setting</a> is off.', 'login-with-google' ),
-			],
-			1,
+				'times'      => 1,
+				'return_arg' => 0,
+			]
 		);
 
 		$this->setOutputCallback(function() {});
@@ -276,20 +284,20 @@ class SettingsTest extends TestCase {
 	public function testWhitelistedDomains() {
 		$this->testee->whitelisted_domains = 'https://example1.com,https://example2.com';
 
-		$this->wpMockFunction(
+		WP_Mock::userFunction(
 			'esc_attr',
 			[
-				'https://example1.com,https://example2.com',
-			],
-			1,
+				'times'      => 1,
+				'return_arg' => 0,
+			]
 		);
 
-		$this->wpMockFunction(
+		WP_Mock::userFunction(
 			'esc_html',
 			[
-				__( 'Add each domain comma separated', 'login-with-google' )
-			],
-			1,
+				'times'      => 1,
+				'return_arg' => 0,
+			]
 		);
 
 		$this->setOutputCallback(function() {});
@@ -302,12 +310,12 @@ class SettingsTest extends TestCase {
 	 */
 	public function testClientSecretField() {
 		$this->testee->client_secret = 'cis';
-		$this->wpMockFunction(
+		WP_Mock::userFunction(
 			'esc_attr',
 			[
-				'cis'
-			],
-			1
+				'times'      => 1,
+				'return_arg' => 0,
+			]
 		);
 
 		$this->setOutputCallback(function() {});

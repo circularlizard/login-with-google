@@ -5,19 +5,19 @@
 
 declare( strict_types=1 );
 
-namespace RtCamp\GoogleLogin\Tests\Unit\Utils;
+namespace Circularlizard\OAuthLogin\Tests\Unit\Utils;
 
 use WP_Mock;
 use Exception;
-use RtCamp\GoogleLogin\Tests\TestCase;
-use RtCamp\GoogleLogin\Utils\GoogleClient as Testee;
+use Circularlizard\OAuthLogin\Tests\TestCase;
+use Circularlizard\OAuthLogin\Utils\GoogleClient as Testee;
 
 /**
  * Class GoogleClientTest
  *
- * @coversDefaultClass \RtCamp\GoogleLogin\Utils\GoogleClient
+ * @coversDefaultClass \Circularlizard\OAuthLogin\Utils\GoogleClient
  *
- * @package RtCamp\GoogleLogin\Tests\Unit\Utils
+ * @package Circularlizard\OAuthLogin\Tests\Unit\Utils
  */
 class GoogleClientTest extends TestCase {
 

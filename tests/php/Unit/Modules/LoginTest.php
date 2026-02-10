@@ -5,27 +5,27 @@
 
 declare( strict_types=1 );
 
-namespace RtCamp\GoogleLogin\Tests\Unit\Modules;
+namespace Circularlizard\OAuthLogin\Tests\Unit\Modules;
 
 use Exception;
-use RtCamp\GoogleLogin\Container;
-use RtCamp\GoogleLogin\Plugin;
+use Circularlizard\OAuthLogin\Container;
+use Circularlizard\OAuthLogin\Plugin;
 use WP_Mock;
 use Mockery;
-use RtCamp\GoogleLogin\Utils\Helper;
-use RtCamp\GoogleLogin\Utils\GoogleClient;
-use RtCamp\GoogleLogin\Modules\Settings;
-use RtCamp\GoogleLogin\Modules\Login as Testee;
-use RtCamp\GoogleLogin\Tests\TestCase;
-use RtCamp\GoogleLogin\Interfaces\Module as ModuleInterface;
-use RtCamp\GoogleLogin\Utils\Authenticator;
+use Circularlizard\OAuthLogin\Utils\Helper;
+use Circularlizard\OAuthLogin\Utils\GoogleClient;
+use Circularlizard\OAuthLogin\Modules\Settings;
+use Circularlizard\OAuthLogin\Modules\Login as Testee;
+use Circularlizard\OAuthLogin\Tests\TestCase;
+use Circularlizard\OAuthLogin\Interfaces\Module as ModuleInterface;
+use Circularlizard\OAuthLogin\Utils\Authenticator;
 
 /**
  * Class LoginTest
  *
- * @coversDefaultClass \RtCamp\GoogleLogin\Modules\Login
+ * @coversDefaultClass \Circularlizard\OAuthLogin\Modules\Login
  *
- * @package RtCamp\GoogleLogin\Tests\Unit\Modules
+ * @package Circularlizard\OAuthLogin\Tests\Unit\Modules
  */
 class LoginTest extends TestCase {
 	/**
@@ -76,10 +76,10 @@ class LoginTest extends TestCase {
 		WP_Mock::expectActionAdded( 'login_form', [ $this->testee, 'login_button' ] );
 		WP_Mock::expectActionAdded( 'authenticate', [ $this->testee, 'authenticate' ], 20 );
 		WP_Mock::expectActionAdded( 'rtcamp.google_register_user', [ $this->authenticatorMock, 'register' ] );
-		WP_Mock::expectActionAdded( 'rtcamp.google_redirect_url', [ $this->testee, 'redirect_url' ] );
 		WP_Mock::expectActionAdded( 'rtcamp.google_user_created', [ $this->testee, 'user_meta' ] );
-		WP_Mock::expectFilterAdded( 'rtcamp.google_login_state', [ $this->testee, 'state_redirect' ] );
 		WP_Mock::expectActionAdded( 'wp_login', [ $this->testee, 'login_redirect' ] );
+		WP_Mock::expectFilterAdded( 'rtcamp.google_redirect_url', [ $this->testee, 'redirect_url' ] );
+		WP_Mock::expectFilterAdded( 'rtcamp.google_login_state', [ $this->testee, 'state_redirect' ] );
 
 		$this->testee->init();
 		$this->assertConditionsMet();
@@ -106,7 +106,7 @@ class LoginTest extends TestCase {
 		                   ->willReturn( 'https://google.com/auth/' );
 
 		$this->wpMockFunction(
-			'RtCamp\GoogleLogin\plugin',
+			'Circularlizard\OAuthLogin\plugin',
 			[],
 			2,
 			$pluginMock

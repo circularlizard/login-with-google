@@ -5,18 +5,18 @@
 
 declare( strict_types=1 );
 
-namespace RtCamp\GoogleLogin\Tests\Unit\Modules;
+namespace Circularlizard\OAuthLogin\Tests\Unit\Modules;
 
 use WP_Mock;
-use RtCamp\GoogleLogin\Tests\TestCase;
-use RtCamp\GoogleLogin\Modules\Assets as Testee;
+use Circularlizard\OAuthLogin\Tests\TestCase;
+use Circularlizard\OAuthLogin\Modules\Assets as Testee;
 
 /**
  * Class AssetsTest
  *
- * @coversDefaultClass \RtCamp\GoogleLogin\Modules\Assets
+ * @coversDefaultClass \Circularlizard\OAuthLogin\Modules\Assets
  *
- * @package RtCamp\GoogleLogin\Tests\Unit\Modules
+ * @package Circularlizard\OAuthLogin\Tests\Unit\Modules
  */
 class AssetsTest extends TestCase {
 	/**
@@ -61,7 +61,7 @@ class AssetsTest extends TestCase {
 	 */
 	public function testRegisterLoginStyles() {
 		$this->wpMockFunction(
-			'RtCamp\GoogleLogin\plugin',
+			'Circularlizard\OAuthLogin\plugin',
 			[],
 			2,
 			function () {
@@ -75,11 +75,11 @@ class AssetsTest extends TestCase {
 		$this->wpMockFunction(
 			'wp_register_style',
 			[
-				'login-with-google',
-				'https://example.com/assets/build/css/login.css',
+				'oauth-login',
+				'https://example.com/assets/build/css/button/style.css',
 				[],
 				false,
-				true,
+				'all',
 			],
 			1,
 			true
@@ -94,7 +94,7 @@ class AssetsTest extends TestCase {
 	 */
 	public function testRegisterLoginScript() {
 		$this->wpMockFunction(
-			'RtCamp\GoogleLogin\plugin',
+			'Circularlizard\OAuthLogin\plugin',
 			[],
 			2,
 			function () {
@@ -108,7 +108,7 @@ class AssetsTest extends TestCase {
 		$this->wpMockFunction(
 			'wp_register_script',
 			[
-				'login-with-google',
+				'oauth-login',
 				'https://example.com/assets/js/login.js',
 				[
 					'some-other-script'
@@ -121,7 +121,7 @@ class AssetsTest extends TestCase {
 		);
 
 		$this->testee->register_script(
-			'login-with-google',
+			'oauth-login',
 			'js/login.js',
 			[
 				'some-other-script'
@@ -140,7 +140,7 @@ class AssetsTest extends TestCase {
 		$this->wpMockFunction(
 			'wp_style_is',
 			[
-				'login-with-google',
+				'oauth-login',
 				'registered',
 			],
 			1,
@@ -160,7 +160,7 @@ class AssetsTest extends TestCase {
 		$this->wpMockFunction(
 			'wp_register_style',
 			[
-				'login-with-google',
+				'oauth-login',
 				'https://example.com/assets/build/css/login.css',
 				[],
 				false,
@@ -173,7 +173,7 @@ class AssetsTest extends TestCase {
 		$this->wpMockFunction(
 			'wp_enqueue_style',
 			[
-				'login-with-google',
+				'oauth-login',
 			],
 			1,
 			true
@@ -202,7 +202,7 @@ class AssetsTest extends TestCase {
 		$this->wpMockFunction(
 			'wp_style_is',
 			[
-				'login-with-google',
+				'oauth-login',
 				'registered',
 			],
 			1,
@@ -220,7 +220,7 @@ class AssetsTest extends TestCase {
 		);
 
 		$this->wpMockFunction(
-			'RtCamp\GoogleLogin\plugin',
+			'Circularlizard\OAuthLogin\plugin',
 			[],
 			4,
 			function () {
@@ -234,11 +234,11 @@ class AssetsTest extends TestCase {
 		$this->wpMockFunction(
 			'wp_register_style',
 			[
-				'login-with-google',
-				'https://example.com/assets/build/css/login.css',
+				'oauth-login',
+				'https://example.com/assets/build/css/button/style.css',
 				[],
 				false,
-				true,
+				'all',
 			],
 			1,
 			true
@@ -247,7 +247,7 @@ class AssetsTest extends TestCase {
 		$this->wpMockFunction(
 			'wp_enqueue_style',
 			[
-				'login-with-google',
+				'oauth-login',
 			],
 			1,
 			true

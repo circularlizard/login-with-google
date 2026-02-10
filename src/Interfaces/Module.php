@@ -5,11 +5,11 @@
  * Every module inside src/Modules/ should implement
  * to this interface.
  *
- * @package RtCamp\GoogleLogin
+ * @package Circularlizard\OAuthLogin
  * @since 1.0.0
  */
 
-namespace RtCamp\GoogleLogin\Interfaces;
+namespace Circularlizard\OAuthLogin\Interfaces;
 
 /**
  * Interface Module

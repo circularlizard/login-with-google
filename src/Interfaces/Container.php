@@ -8,7 +8,7 @@
 
 declare(strict_types=1);
 
-namespace RtCamp\GoogleLogin\Interfaces;
+namespace Circularlizard\OAuthLogin\Interfaces;
 
 /**
  * Interface Container

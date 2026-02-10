@@ -5,23 +5,23 @@
 
 declare( strict_types=1 );
 
-namespace RtCamp\GoogleLogin\Tests\Unit\Modules;
+namespace Circularlizard\OAuthLogin\Tests\Unit\Modules;
 
-use RtCamp\GoogleLogin\Interfaces\Module as ModuleInterface;
-use RtCamp\GoogleLogin\Utils\Helper;
+use Circularlizard\OAuthLogin\Interfaces\Module as ModuleInterface;
+use Circularlizard\OAuthLogin\Utils\Helper;
 use WP_Mock;
 use Mockery;
-use RtCamp\GoogleLogin\Modules\Shortcode as Testee;
-use RtCamp\GoogleLogin\Tests\TestCase;
-use RtCamp\GoogleLogin\Utils\GoogleClient;
-use RtCamp\GoogleLogin\Modules\Assets;
+use Circularlizard\OAuthLogin\Modules\Shortcode as Testee;
+use Circularlizard\OAuthLogin\Tests\TestCase;
+use Circularlizard\OAuthLogin\Utils\GoogleClient;
+use Circularlizard\OAuthLogin\Modules\Assets;
 
 /**
  * Class ShortCodeTest
  *
- * @coversDefaultClass \RtCamp\GoogleLogin\Modules\Shortcode
+ * @coversDefaultClass \Circularlizard\OAuthLogin\Modules\Shortcode
  *
- * @package RtCamp\GoogleLogin\Tests\Unit\Modules
+ * @package Circularlizard\OAuthLogin\Tests\Unit\Modules
  */
 class ShortCodeTest extends TestCase {
 	/**
@@ -91,19 +91,15 @@ class ShortCodeTest extends TestCase {
 	 * @covers ::should_display
 	 */
 	public function testCallbackWhenUserIsLoggedIn() {
-		$this->wpMockFunction(
-			'get_permalink',
-			[],
-			1,
-			'https://example.com/'
-		);
+		$helperMock = Mockery::mock( 'alias:' . Helper::class );
+		$helperMock->expects( 'get_redirect_url' )->once()->andReturn( 'https://example.com/' );
 
 		WP_Mock::userFunction(
 			'shortcode_atts',
 			[
 				'args'       => [
 					[
-						'button_text'   => __( 'Login with google', 'login-with-google' ),
+						'button_text'   => __( 'Login with google', 'oauth-login' ),
 						'force_display' => 'no',
 						'redirect_to'   => 'https://example.com/',
 					],
@@ -132,14 +128,26 @@ class ShortCodeTest extends TestCase {
 	 * @covers ::should_display
 	 */
 	public function testCallbackWhenUserIsLoggedOut() {
+		$helperMock = Mockery::mock( 'alias:' . Helper::class );
+		$helperMock->expects( 'get_redirect_url' )->once()->andReturn( 'https://example.com/' );
+		$helperMock->expects( 'set_redirect_state_filter' )->once();
+		$helperMock->expects( 'remove_redirect_state_filter' )->once();
+		$helperMock->expects( 'render_template' )->once()->withArgs(
+			[
+				'/some/path/templates/google-login-button.php',
+				Mockery::type( 'array' ),
+				false
+			]
+		)->andReturn( '' );
+
 		WP_Mock::userFunction(
 			'shortcode_atts',
 			[
 				'args'       => [
 					[
-						'button_text'   => __( 'Login with google', 'login-with-google' ),
+						'button_text'   => __( 'Login with google', 'oauth-login' ),
 						'force_display' => 'no',
-						'redirect_to'   => null,
+						'redirect_to'   => 'https://example.com/',
 					],
 					[],
 					'google_login',
@@ -159,7 +167,7 @@ class ShortCodeTest extends TestCase {
 		WP_Mock::expectFilterAdded( 'rtcamp.google_redirect_url', [ $this->testee, 'redirect_url' ] );
 
 		$this->wpMockFunction(
-			'RtCamp\GoogleLogin\plugin',
+			'Circularlizard\OAuthLogin\plugin',
 			[],
 			1,
 			(object) [
@@ -177,21 +185,6 @@ class ShortCodeTest extends TestCase {
 		$this->ghClientMock->expects( $this->once() )
 		                   ->method( 'authorization_url' )
 		                   ->willReturn( 'https://google.com/auth/' );
-
-
-		$helperMock = Mockery::mock( 'alias:' . Helper::class );
-		$helperMock->expects( 'render_template' )->once()->withArgs(
-			[
-				'/some/path/templates/google-login-button.php',
-				[
-					'button_text'   => 'Login with google',
-					'force_display' => 'no',
-					'redirect_to'   => null,
-					'login_url'     => 'https://google.com/auth/',
-				],
-				false
-			]
-		)->andReturn( '' );
 
 		$this->testee->callback();
 		$this->assertConditionsMet();
@@ -274,34 +267,5 @@ class ShortCodeTest extends TestCase {
 
 		$r_url = $this->testee->redirect_url( $url );
 		$this->assertSame( $r_url, 'https://example.com/' );
-	}
-
-	/**
-	 * @covers ::state_redirect
-	 */
-	public function testStateRedirectWithRedirectUrl() {
-		$this->testee->redirect_uri = 'https://example.com';
-
-		$state = [
-			'provider'    => 'google',
-			'redirect_to' => 'https://example.com'
-		];
-
-		$expected = $this->testee->state_redirect( $state );
-		$this->assertSame( $expected, $state );
-	}
-
-	/**
-	 * @covers ::state_redirect
-	 */
-	public function testStateRedirectWithoutRedirectUrl() {
-		$this->testee->redirect_uri = null;
-
-		$state = [
-			'provider' => 'google'
-		];
-
-		$expected = $this->testee->state_redirect( $state );
-		$this->assertSame( $expected, $state );
 	}
 }

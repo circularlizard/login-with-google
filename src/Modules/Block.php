@@ -7,23 +7,23 @@
  *
  * Particularly useful in FSE.
  *
- * @package RtCamp\GoogleLogin
+ * @package Circularlizard\OAuthLogin
  * @since 1.2.3
  */
 
 declare( strict_types=1 );
 
-namespace RtCamp\GoogleLogin\Modules;
+namespace Circularlizard\OAuthLogin\Modules;
 
-use RtCamp\GoogleLogin\Utils\Helper;
-use RtCamp\GoogleLogin\Utils\GoogleClient;
-use RtCamp\GoogleLogin\Interfaces\Module;
-use function RtCamp\GoogleLogin\plugin;
+use Circularlizard\OAuthLogin\Utils\Helper;
+use Circularlizard\OAuthLogin\Utils\GoogleClient;
+use Circularlizard\OAuthLogin\Interfaces\Module;
+use function Circularlizard\OAuthLogin\plugin;
 
 /**
  * Class Block.
  *
- * @package RtCamp\GoogleLogin\Modules
+ * @package Circularlizard\OAuthLogin\Modules
  */
 class Block implements Module {
 

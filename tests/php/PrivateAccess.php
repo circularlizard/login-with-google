@@ -2,10 +2,10 @@
 /**
  * Trait to access/test private methods/properties.
  *
- * @package RtCamp\GoogleLogin
+ * @package Circularlizard\OAuthLogin
  */
 
-namespace RtCamp\GoogleLogin\Tests;
+namespace Circularlizard\OAuthLogin\Tests;
 
 use ReflectionClass;
 use ReflectionException;

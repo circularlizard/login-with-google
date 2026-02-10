@@ -6,29 +6,29 @@
  * google login button on wp-login page, authorizing the user,
  * authenticating user and redirecting him to admin.
  *
- * @package RtCamp\GoogleLogin
+ * @package Circularlizard\OAuthLogin
  * @since 1.0.0
  */
 
 declare(strict_types=1);
 
-namespace RtCamp\GoogleLogin\Modules;
+namespace Circularlizard\OAuthLogin\Modules;
 
 use WP_User;
 use WP_Error;
 use stdClass;
 use Throwable;
 use Exception;
-use RtCamp\GoogleLogin\Utils\Helper;
-use RtCamp\GoogleLogin\Utils\GoogleClient;
-use RtCamp\GoogleLogin\Utils\Authenticator;
-use RtCamp\GoogleLogin\Interfaces\Module as ModuleInterface;
-use function RtCamp\GoogleLogin\plugin;
+use Circularlizard\OAuthLogin\Utils\Helper;
+use Circularlizard\OAuthLogin\Utils\GoogleClient;
+use Circularlizard\OAuthLogin\Utils\Authenticator;
+use Circularlizard\OAuthLogin\Interfaces\Module as ModuleInterface;
+use function Circularlizard\OAuthLogin\plugin;
 
 /**
  * Class Login.
  *
- * @package RtCamp\GoogleLogin\Modules
+ * @package Circularlizard\OAuthLogin\Modules
  */
 class Login implements ModuleInterface {
 	/**
@@ -163,7 +163,7 @@ class Login implements ModuleInterface {
 				return $user;
 			}
 
-			throw new Exception( __( 'Could not authenticate the user, please try again.', 'login-with-google' ) );
+			throw new Exception( __( 'Could not authenticate the user, please try again.', 'oauth-login' ) );
 
 		} catch ( Throwable $e ) {
 			return new WP_Error( 'google_login_failed', $e->getMessage() );

@@ -2,23 +2,23 @@
 /**
  * Shortcode Class.
  *
- * @package RtCamp\GoogleLogin
+ * @package Circularlizard\OAuthLogin
  * @since 1.0.0
  */
 
 declare(strict_types=1);
 
-namespace RtCamp\GoogleLogin\Modules;
+namespace Circularlizard\OAuthLogin\Modules;
 
-use RtCamp\GoogleLogin\Interfaces\Module as ModuleInterface;
-use RtCamp\GoogleLogin\Utils\Helper;
-use RtCamp\GoogleLogin\Utils\GoogleClient;
-use function RtCamp\GoogleLogin\plugin;
+use Circularlizard\OAuthLogin\Interfaces\Module as ModuleInterface;
+use Circularlizard\OAuthLogin\Utils\Helper;
+use Circularlizard\OAuthLogin\Utils\GoogleClient;
+use function Circularlizard\OAuthLogin\plugin;
 
 /**
  * Class Shortcode
  *
- * @package RtCamp\GoogleLogin
+ * @package Circularlizard\OAuthLogin
  */
 class Shortcode implements ModuleInterface {
 
@@ -98,7 +98,7 @@ class Shortcode implements ModuleInterface {
 		$redirect_to = Helper::get_redirect_url();
 		$attrs       = shortcode_atts(
 			[
-				'button_text'   => __( 'Login with google', 'login-with-google' ),
+				'button_text'   => __( 'Login with google', 'oauth-login' ),
 				'force_display' => 'no',
 				'redirect_to'   => $redirect_to,
 			],
