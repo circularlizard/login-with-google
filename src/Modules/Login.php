@@ -3,7 +3,7 @@
  * Login class.
  *
  * This will manage the login flow, which includes adding the
- * google login button on wp-login page, authorizing the user,
+ * OAuth login button on wp-login page, authorizing the user,
  * authenticating user and redirecting him to admin.
  *
  * @package Circularlizard\OAuthLogin
@@ -233,7 +233,7 @@ class Login implements ModuleInterface {
 		$state = $state ? json_decode( $state ) : null;
 
 		if ( ( $state instanceof stdClass ) && ! empty( $state->provider ) && 'google' === $state->provider && ! empty( $state->redirect_to ) ) {
-			wp_safe_redirect( $state->redirect_to, 302, 'Login with Google' );
+			wp_safe_redirect( $state->redirect_to, 302, 'OAuth Login' );
 			exit;
 		}
 	}

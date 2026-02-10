@@ -5,7 +5,7 @@
  *
  * @package Circularlizard\OAuthLogin
  * @since 1.0.0
- * @author rtCamp <contact@rtcamp.com>
+ * @author Circularlizard (forked from rtCamp)
  */
 
 declare(strict_types=1);
@@ -323,8 +323,8 @@ class Settings implements ModuleInterface {
 	 */
 	public function settings_page(): void {
 		add_options_page(
-			__( 'Login with Google settings', 'oauth-login' ),
-			__( 'Login with Google', 'oauth-login' ),
+			__( 'OAuth Login Settings', 'oauth-login' ),
+			__( 'OAuth Login', 'oauth-login' ),
 			'manage_options',
 			'oauth-login',
 			[ $this, 'output' ]
