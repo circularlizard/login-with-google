@@ -89,10 +89,25 @@ class Container implements ContainerInterface {
 		/**
 		 * Define Settings service to add settings page and retrieve setting values.
 		 *
+		 * @param PimpleContainer $c Pimple container object.
+		 *
 		 * @return Settings
 		 */
-		$this->container['settings'] = function () {
-			return new Settings();
+		$this->container['settings'] = function ( PimpleContainer $c ) {
+			$settings = new Settings();
+
+			// Inject provider registry if available (deferred to avoid circular dependency).
+			add_action(
+				'plugins_loaded',
+				function () use ( $c, $settings ) {
+					if ( isset( $c['provider_registry'] ) ) {
+						$settings->set_registry( $c['provider_registry'] );
+					}
+				},
+				5
+			);
+
+			return $settings;
 		};
 
 		/**

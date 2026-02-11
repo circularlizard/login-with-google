@@ -12,6 +12,8 @@
 | 3.1-3.5 | Provider abstraction | 17 new | ✅ PASS |
 | GATE 1 | Provider abstraction complete | 109 tests | ✅ PASS |
 | 4.1 | Update Settings labels | - | ✅ PASS |
+| 4.2 | Per-provider settings sections | 5 new | ✅ PASS |
+| 4.3 | Custom provider form with validation | 2 new | ✅ PASS |
 | 5.1 | Update Login module | - | ✅ PASS |
 | 6.1 | Update Shortcode/Block | - | ✅ PASS |
 | 7.1-7.3 | Move Google features to Providers/Google/ | - | ✅ PASS |
@@ -20,7 +22,7 @@
 | 10.1 | Update README documentation | - | ✅ PASS |
 
 ### Final Summary
-- **Total Tests**: 112 (20 new tests)
+- **Total Tests**: 119 (27 new tests)
 - **PHPCS**: Clean
 - **Assets**: Build successfully
 - **POT File**: Regenerated with `oauth-login` text domain
@@ -39,6 +41,10 @@
 11. Created backward-compatible aliases in old locations
 12. Regenerated POT file with new text domain
 13. Updated README with new plugin name and custom provider docs
+14. **NEW**: Multi-provider Settings UI with dynamic provider sections
+15. **NEW**: Custom OAuth Provider form with add/delete functionality
+16. **NEW**: New settings structure `wp_oauth_login_settings[providers][{slug}]`
+17. **NEW**: ProviderRegistry injection into Settings module
 
 ### Blockers
 (none)
