@@ -9,8 +9,10 @@ namespace Circularlizard\OAuthLogin\Tests\Unit\Modules;
 
 use WP_Mock;
 use Circularlizard\OAuthLogin\Interfaces\Module as ModuleInterface;
+use Circularlizard\OAuthLogin\Interfaces\OAuthProvider;
 use Circularlizard\OAuthLogin\Tests\TestCase;
 use Circularlizard\OAuthLogin\Modules\Settings as Testee;
+use Circularlizard\OAuthLogin\Utils\ProviderRegistry;
 
 /**
  * Class SettingsTest
@@ -71,6 +73,19 @@ class SettingsTest extends TestCase {
 			]
 		);
 
+		$this->wpMockFunction(
+			'get_option',
+			[
+				'wp_oauth_login_settings',
+				[]
+			],
+			1,
+			[]
+		);
+
+		WP_Mock::expectActionAdded( 'admin_init', [ $this->testee, 'register_settings' ] );
+		WP_Mock::expectActionAdded( 'admin_menu', [ $this->testee, 'settings_page' ] );
+
 		$this->testee->init();
 		$value = $this->testee->__get( 'client_id' );
 		$this->assertEquals( 'cid', $value );
@@ -90,6 +105,16 @@ class SettingsTest extends TestCase {
 			[]
 		);
 
+		$this->wpMockFunction(
+			'get_option',
+			[
+				'wp_oauth_login_settings',
+				[]
+			],
+			1,
+			[]
+		);
+
 		WP_Mock::expectActionAdded( 'admin_init', [ $this->testee, 'register_settings' ] );
 		WP_Mock::expectActionAdded( 'admin_menu', [ $this->testee, 'settings_page' ] );
 
@@ -101,39 +126,75 @@ class SettingsTest extends TestCase {
 	 * @covers ::register_settings
 	 */
 	public function testRegisterSettings() {
-		$this->wpMockFunction(
+		// Expect both old and new settings to be registered.
+		WP_Mock::userFunction(
 			'register_setting',
 			[
-				'wp_google_login',
-				'wp_google_login_settings'
-			],
-			1,
-			true
+				'times' => 2,
+			]
 		);
 
-		$this->wpMockFunction(
-			'add_settings_section',
-			[
-				'wp_google_login_section',
-				'Log in with Google Settings',
-				\Closure::class,
-				'oauth-login'
-			],
-			1
-		);
-
+		// Legacy Google + General + One Tap + Custom Providers = 4 sections (no registry set).
 		WP_Mock::userFunction(
-			'add_settings_field',
+			'add_settings_section',
 			[
 				'args'  => [
 					\WP_Mock\Functions::type( 'string' ),
 					\WP_Mock\Functions::type( 'string' ),
 					\WP_Mock\Functions::type( 'callable' ),
 					\WP_Mock\Functions::type( 'string' ),
-					\WP_Mock\Functions::type( 'string' ),
-					\WP_Mock\Functions::type( 'array' ),
 				],
-				'times' => 6
+				'times' => 4
+			]
+		);
+
+		// 2 legacy Google fields + 2 general + 2 one tap + 1 custom providers = 7 fields.
+		WP_Mock::userFunction(
+			'add_settings_field',
+			[
+				'times' => 7
+			]
+		);
+
+		$this->testee->register_settings();
+		$this->assertConditionsMet();
+	}
+
+	/**
+	 * @covers ::register_settings
+	 * @covers ::register_provider_settings
+	 */
+	public function testRegisterSettingsWithRegistry() {
+		// Create mock provider.
+		$provider = \Mockery::mock( OAuthProvider::class );
+		$provider->shouldReceive( 'get_provider_id' )->andReturn( 'test_provider' );
+		$provider->shouldReceive( 'get_provider_name' )->andReturn( 'Test Provider' );
+
+		$registry = new ProviderRegistry();
+		$registry->register( $provider );
+
+		$this->testee->set_registry( $registry );
+
+		WP_Mock::userFunction(
+			'register_setting',
+			[
+				'times' => 2,
+			]
+		);
+
+		// Provider section + General + One Tap + Custom Providers = 4 sections.
+		WP_Mock::userFunction(
+			'add_settings_section',
+			[
+				'times' => 4,
+			]
+		);
+
+		// 3 provider fields + 2 general + 2 one tap + 1 custom providers = 8 fields.
+		WP_Mock::userFunction(
+			'add_settings_field',
+			[
+				'times' => 8,
 			]
 		);
 
@@ -167,12 +228,19 @@ class SettingsTest extends TestCase {
 	 * @covers ::output
 	 */
 	public function testOutput() {
-		$this->wpMockFunction(
+		WP_Mock::userFunction(
+			'esc_html_e',
+			[
+				'times' => 1,
+			]
+		);
+
+		// Now expects both settings groups.
+		WP_Mock::userFunction(
 			'settings_fields',
 			[
-				'wp_google_login',
-			],
-			1
+				'times' => 2,
+			]
 		);
 
 		$this->wpMockFunction(
@@ -193,6 +261,260 @@ class SettingsTest extends TestCase {
 		$this->setOutputCallback(function() {});
 		$this->testee->output();
 		$this->assertConditionsMet();
+	}
+
+	/**
+	 * @covers ::set_registry
+	 * @covers ::get_registry
+	 */
+	public function testSetAndGetRegistry() {
+		$registry = new ProviderRegistry();
+
+		$this->assertNull( $this->testee->get_registry() );
+
+		$this->testee->set_registry( $registry );
+
+		$this->assertSame( $registry, $this->testee->get_registry() );
+	}
+
+	/**
+	 * @covers ::get_provider_setting
+	 * @covers ::get_provider_settings
+	 */
+	public function testGetProviderSettings() {
+		$this->wpMockFunction(
+			'get_option',
+			[
+				'wp_google_login_settings',
+				[]
+			],
+			1,
+			[]
+		);
+
+		$this->wpMockFunction(
+			'get_option',
+			[
+				'wp_oauth_login_settings',
+				[]
+			],
+			1,
+			[
+				'providers' => [
+					'google' => [
+						'client_id'     => 'test-client-id',
+						'client_secret' => 'test-secret',
+						'enabled'       => true,
+					],
+				],
+			]
+		);
+
+		WP_Mock::expectActionAdded( 'admin_init', [ $this->testee, 'register_settings' ] );
+		WP_Mock::expectActionAdded( 'admin_menu', [ $this->testee, 'settings_page' ] );
+
+		$this->testee->init();
+
+		$this->assertEquals( 'test-client-id', $this->testee->get_provider_setting( 'google', 'client_id' ) );
+		$this->assertEquals( 'test-secret', $this->testee->get_provider_setting( 'google', 'client_secret' ) );
+		$this->assertEquals( 'default', $this->testee->get_provider_setting( 'google', 'nonexistent', 'default' ) );
+
+		$settings = $this->testee->get_provider_settings( 'google' );
+		$this->assertArrayHasKey( 'client_id', $settings );
+		$this->assertArrayHasKey( 'client_secret', $settings );
+	}
+
+	/**
+	 * @covers ::is_provider_enabled
+	 */
+	public function testIsProviderEnabled() {
+		$this->wpMockFunction(
+			'get_option',
+			[
+				'wp_google_login_settings',
+				[]
+			],
+			1,
+			[]
+		);
+
+		$this->wpMockFunction(
+			'get_option',
+			[
+				'wp_oauth_login_settings',
+				[]
+			],
+			1,
+			[
+				'providers' => [
+					'google' => [
+						'client_id'     => 'test-id',
+						'client_secret' => 'test-secret',
+						'enabled'       => true,
+					],
+					'disabled_provider' => [
+						'client_id'     => 'test-id',
+						'client_secret' => 'test-secret',
+						'enabled'       => false,
+					],
+					'incomplete_provider' => [
+						'client_id' => '',
+						'enabled'   => true,
+					],
+				],
+			]
+		);
+
+		WP_Mock::expectActionAdded( 'admin_init', [ $this->testee, 'register_settings' ] );
+		WP_Mock::expectActionAdded( 'admin_menu', [ $this->testee, 'settings_page' ] );
+
+		$this->testee->init();
+
+		$this->assertTrue( $this->testee->is_provider_enabled( 'google' ) );
+		$this->assertFalse( $this->testee->is_provider_enabled( 'disabled_provider' ) );
+		$this->assertFalse( $this->testee->is_provider_enabled( 'incomplete_provider' ) );
+		$this->assertFalse( $this->testee->is_provider_enabled( 'nonexistent' ) );
+	}
+
+	/**
+	 * @covers ::sanitize_settings
+	 */
+	public function testSanitizeSettings() {
+		WP_Mock::userFunction(
+			'sanitize_key',
+			[
+				'return_arg' => 0,
+			]
+		);
+
+		WP_Mock::userFunction(
+			'sanitize_text_field',
+			[
+				'return_arg' => 0,
+			]
+		);
+
+		$input = [
+			'providers' => [
+				'google' => [
+					'enabled'       => '1',
+					'client_id'     => 'my-client-id',
+					'client_secret' => 'my-secret',
+				],
+			],
+		];
+
+		$result = $this->testee->sanitize_settings( $input );
+
+		$this->assertTrue( $result['providers']['google']['enabled'] );
+		$this->assertEquals( 'my-client-id', $result['providers']['google']['client_id'] );
+		$this->assertEquals( 'my-secret', $result['providers']['google']['client_secret'] );
+	}
+
+	/**
+	 * @covers ::sanitize_settings
+	 */
+	public function testSanitizeSettingsWithCustomProviders() {
+		WP_Mock::userFunction(
+			'sanitize_key',
+			[
+				'return_arg' => 0,
+			]
+		);
+
+		WP_Mock::userFunction(
+			'sanitize_text_field',
+			[
+				'return_arg' => 0,
+			]
+		);
+
+		WP_Mock::userFunction(
+			'esc_url_raw',
+			[
+				'return_arg' => 0,
+			]
+		);
+
+		$input = [
+			'custom_providers' => [
+				'github' => [
+					'name'          => 'GitHub',
+					'authorize_url' => 'https://github.com/login/oauth/authorize',
+					'token_url'     => 'https://github.com/login/oauth/access_token',
+					'user_info_url' => 'https://api.github.com/user',
+					'scopes'        => 'user:email',
+					'client_id'     => 'github-client-id',
+					'client_secret' => 'github-secret',
+				],
+			],
+			'new_provider' => [
+				'slug'          => 'facebook',
+				'name'          => 'Facebook',
+				'authorize_url' => 'https://www.facebook.com/v12.0/dialog/oauth',
+				'token_url'     => 'https://graph.facebook.com/v12.0/oauth/access_token',
+				'user_info_url' => 'https://graph.facebook.com/me',
+				'scopes'        => 'email,public_profile',
+				'client_id'     => 'fb-client-id',
+				'client_secret' => 'fb-secret',
+			],
+		];
+
+		$result = $this->testee->sanitize_settings( $input );
+
+		// Check existing custom provider.
+		$this->assertArrayHasKey( 'github', $result['custom_providers'] );
+		$this->assertEquals( 'GitHub', $result['custom_providers']['github']['name'] );
+		$this->assertEquals( 'https://github.com/login/oauth/authorize', $result['custom_providers']['github']['authorize_url'] );
+
+		// Check new provider was added.
+		$this->assertArrayHasKey( 'facebook', $result['custom_providers'] );
+		$this->assertEquals( 'Facebook', $result['custom_providers']['facebook']['name'] );
+	}
+
+	/**
+	 * @covers ::sanitize_settings
+	 */
+	public function testSanitizeSettingsDeletesMarkedProviders() {
+		WP_Mock::userFunction(
+			'sanitize_key',
+			[
+				'return_arg' => 0,
+			]
+		);
+
+		WP_Mock::userFunction(
+			'sanitize_text_field',
+			[
+				'return_arg' => 0,
+			]
+		);
+
+		WP_Mock::userFunction(
+			'esc_url_raw',
+			[
+				'return_arg' => 0,
+			]
+		);
+
+		$input = [
+			'custom_providers' => [
+				'github' => [
+					'name'   => 'GitHub',
+					'delete' => '1',
+				],
+				'facebook' => [
+					'name' => 'Facebook',
+				],
+			],
+		];
+
+		$result = $this->testee->sanitize_settings( $input );
+
+		// GitHub should be deleted.
+		$this->assertArrayNotHasKey( 'github', $result['custom_providers'] ?? [] );
+		// Facebook should remain.
+		$this->assertArrayHasKey( 'facebook', $result['custom_providers'] );
 	}
 
 	/**
