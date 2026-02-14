@@ -24,6 +24,7 @@ use Circularlizard\OAuthLogin\Utils\GoogleClient;
 use Circularlizard\OAuthLogin\Utils\Authenticator;
 use Circularlizard\OAuthLogin\Utils\LoginButtonRenderer;
 use Circularlizard\OAuthLogin\Utils\ProviderRegistry;
+use Circularlizard\OAuthLogin\Utils\OAuthState;
 use Circularlizard\OAuthLogin\Interfaces\Module as ModuleInterface;
 use function Circularlizard\OAuthLogin\plugin;
 
@@ -177,7 +178,7 @@ class Login implements ModuleInterface {
 		}
 
 		$state         = Helper::filter_input( INPUT_GET, 'state', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-		$decoded_state = $state ? (array) ( json_decode( base64_decode( $state ) ) ) : null;    // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+		$decoded_state = $state ? OAuthState::decode( $state ) : null;
 
 		if ( ! is_array( $decoded_state ) || empty( $decoded_state['provider'] ) ) {
 			return $user;
@@ -185,9 +186,15 @@ class Login implements ModuleInterface {
 
 		$provider_id = $decoded_state['provider'];
 
-		// Verify nonce - support both legacy and new nonce formats.
-		$nonce_action = 'oauth_login_' . $provider_id;
-		if ( empty( $decoded_state['nonce'] ) || ( ! wp_verify_nonce( $decoded_state['nonce'], $nonce_action ) && ! wp_verify_nonce( $decoded_state['nonce'], 'login_with_google' ) ) ) {
+		// Verify nonce.
+		$nonce_valid = ! empty( $decoded_state['nonce'] ) && wp_verify_nonce( $decoded_state['nonce'], 'oauth_login_' . $provider_id );
+
+		// Legacy nonce fallback ONLY for Google provider (backward compatibility).
+		if ( ! $nonce_valid && 'google' === $provider_id ) {
+			$nonce_valid = ! empty( $decoded_state['nonce'] ) && wp_verify_nonce( $decoded_state['nonce'], 'login_with_google' );
+		}
+
+		if ( ! $nonce_valid ) {
 			return $user;
 		}
 
@@ -335,7 +342,7 @@ class Login implements ModuleInterface {
 	 */
 	public function user_meta( int $uid ) {
 		$state         = Helper::filter_input( INPUT_GET, 'state', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-		$decoded_state = $state ? (array) ( json_decode( base64_decode( $state ) ) ) : null; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+		$decoded_state = $state ? OAuthState::decode( $state ) : null;
 		$provider_id   = $decoded_state['provider'] ?? 'google';
 
 		add_user_meta( $uid, 'oauth_user', 1, true );
@@ -389,11 +396,10 @@ class Login implements ModuleInterface {
 			return;
 		}
 
-		$state = base64_decode( $state );
-		$state = $state ? json_decode( $state ) : null;
+		$decoded = OAuthState::decode( $state );
 
-		if ( ( $state instanceof stdClass ) && ! empty( $state->provider ) && ! empty( $state->redirect_to ) ) {
-			wp_safe_redirect( $state->redirect_to, 302, 'OAuth Login' );
+		if ( is_array( $decoded ) && ! empty( $decoded['provider'] ) && ! empty( $decoded['redirect_to'] ) ) {
+			wp_safe_redirect( $decoded['redirect_to'], 302, 'OAuth Login' );
 			exit;
 		}
 	}
