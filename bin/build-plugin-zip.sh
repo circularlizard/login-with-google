@@ -66,13 +66,26 @@ mkdir -p "$FINAL_DIR"
 
 rsync -av --exclude-from="$ROOT_DIR/.distignore" "$TEMP_DIR/" "$FINAL_DIR/"
 
-# Create release zip
+# Create release zip with version
 echo "Creating release zip..."
 zip -r "$ZIP_FILE" "$(basename "$FINAL_DIR")"
+
+# Create non-versioned zip for manual WordPress server uploads
+echo "Creating non-versioned release zip..."
+NON_VERSIONED_ZIP="${RELEASE_DIR}/${PLUGIN_SLUG}.zip"
+
+# Rename directory temporarily for non-versioned zip
+FINAL_DIR_NAME=$(basename "$FINAL_DIR")
+cd "$RELEASE_DIR" || exit 1
+mv "$FINAL_DIR_NAME" "$PLUGIN_SLUG"
+zip -r "$NON_VERSIONED_ZIP" "$PLUGIN_SLUG"
+mv "$PLUGIN_SLUG" "$FINAL_DIR_NAME"
 
 # Clean up temporary directories
 echo "Cleaning up..."
 rm -rf "$TEMP_DIR"
 rm -rf "$FINAL_DIR"
 
-echo "✅ Release zip created at: $ZIP_FILE"
+echo "✅ Release zips created:"
+echo "   Versioned:     $ZIP_FILE"
+echo "   Non-versioned: $NON_VERSIONED_ZIP"
