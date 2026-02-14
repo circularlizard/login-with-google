@@ -2,21 +2,21 @@
 # This file is distributed under the GPLv2+.
 msgid ""
 msgstr ""
-"Project-Id-Version: OAuth Login 2.0.0\n"
-"Report-Msgid-Bugs-To: https://github.com/circularlizard/oauth-login/issues\n"
+"Project-Id-Version: OAuth Login 2.1.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/login-with-google\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-02-10T22:49:04+00:00\n"
+"POT-Creation-Date: 2026-02-14T21:29:18+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0-alpha\n"
 "X-Domain: oauth-login\n"
 
 #. Plugin Name of the plugin
 #: oauth-login.php
-#: src/Modules/Settings.php:327
+#: src/Modules/Settings.php:1377
 msgid "OAuth Login"
 msgstr ""
 
@@ -44,87 +44,478 @@ msgid "The plugin OAuth Login has been deactivated"
 msgstr ""
 
 #. translators: %$s is replaced with requested service name.
-#: src/Container.php:68
+#: src/Container.php:71
 #, php-format
 msgid "Invalid Service %s Passed to the container"
 msgstr ""
 
-#: src/Modules/Login.php:166
+#: src/Modules/Login.php:256
+#: src/Modules/Login.php:347
 msgid "Could not authenticate the user, please try again."
 msgstr ""
 
-#: src/Modules/Settings.php:106
-msgid "Log in with Google Settings"
+#: src/Modules/Login.php:275
+#: src/Modules/ProviderTestLogin.php:161
+msgid "Provider registry not available."
 msgstr ""
 
-#: src/Modules/Settings.php:114
-msgid "Client ID"
+#: src/Modules/Login.php:281
+msgid "Unknown OAuth provider."
 msgstr ""
 
-#: src/Modules/Settings.php:123
-msgid "Client Secret"
+#: src/Modules/Login.php:301
+#: src/Utils/GoogleClient.php:204
+msgid "Could not retrieve the access token, please try again."
 msgstr ""
 
-#: src/Modules/Settings.php:132
+#: src/Modules/Login.php:308
+msgid "Access token not found in provider response."
+msgstr ""
+
+#: src/Modules/Login.php:323
+msgid "Could not retrieve user information from provider."
+msgstr ""
+
+#: src/Modules/ProviderTestLogin.php:76
+#: src/Modules/ProviderTestLogin.php:147
+#: src/Modules/ProviderTestLogin.php:365
+msgid "Insufficient permissions."
+msgstr ""
+
+#: src/Modules/ProviderTestLogin.php:82
+#: src/Modules/ProviderTestLogin.php:376
+msgid "Invalid provider."
+msgstr ""
+
+#: src/Modules/ProviderTestLogin.php:88
+msgid "Provider not found in registry."
+msgstr ""
+
+#: src/Modules/ProviderTestLogin.php:151
+msgid "Invalid state data."
+msgstr ""
+
+#: src/Modules/ProviderTestLogin.php:157
+msgid "Nonce verification failed."
+msgstr ""
+
+#: src/Modules/ProviderTestLogin.php:167
+msgid "Provider not found."
+msgstr ""
+
+#: src/Modules/ProviderTestLogin.php:195
+msgid "Failed to get access token."
+msgstr ""
+
+#: src/Modules/ProviderTestLogin.php:221
+msgid "Failed to fetch user info. HTTP status: "
+msgstr ""
+
+#: src/Modules/ProviderTestLogin.php:244
+msgid "OAuth Test Result"
+msgstr ""
+
+#: src/Modules/ProviderTestLogin.php:260
+msgid "OAuth Test Login Result"
+msgstr ""
+
+#: src/Modules/ProviderTestLogin.php:263
+msgid "Error:"
+msgstr ""
+
+#: src/Modules/ProviderTestLogin.php:265
+msgid "Success!"
+msgstr ""
+
+#: src/Modules/ProviderTestLogin.php:265
+msgid "Connected to provider and retrieved user data."
+msgstr ""
+
+#: src/Modules/ProviderTestLogin.php:267
+msgid "Raw Response"
+msgstr ""
+
+#: src/Modules/ProviderTestLogin.php:270
+msgid "Field Mapping"
+msgstr ""
+
+#: src/Modules/ProviderTestLogin.php:271
+msgid "Select which response fields map to user data:"
+msgstr ""
+
+#: src/Modules/ProviderTestLogin.php:276
+msgid "User Field"
+msgstr ""
+
+#: src/Modules/ProviderTestLogin.php:277
+msgid "Provider Field"
+msgstr ""
+
+#: src/Modules/ProviderTestLogin.php:278
+msgid "Sample Value"
+msgstr ""
+
+#: src/Modules/ProviderTestLogin.php:284
+#: src/Modules/Settings.php:654
+msgid "Email"
+msgstr ""
+
+#: src/Modules/ProviderTestLogin.php:285
+#: src/Modules/Settings.php:660
+msgid "First Name"
+msgstr ""
+
+#: src/Modules/ProviderTestLogin.php:286
+#: src/Modules/Settings.php:666
+msgid "Last Name"
+msgstr ""
+
+#: src/Modules/ProviderTestLogin.php:287
+#: src/Modules/Settings.php:672
+msgid "Display Name"
+msgstr ""
+
+#: src/Modules/ProviderTestLogin.php:288
+msgid "Avatar URL"
+msgstr ""
+
+#: src/Modules/ProviderTestLogin.php:296
+msgid "-- Not mapped --"
+msgstr ""
+
+#: src/Modules/ProviderTestLogin.php:310
+msgid "Apply Mappings to Settings"
+msgstr ""
+
+#: src/Modules/ProviderTestLogin.php:344
+msgid "Could not communicate with settings page. Please copy the mappings manually."
+msgstr ""
+
+#: src/Modules/ProviderTestLogin.php:382
+msgid "Provider not found in settings."
+msgstr ""
+
+#: src/Modules/ProviderTestLogin.php:388
+msgid "Field mappings saved."
+msgstr ""
+
+#: src/Modules/Settings.php:231
+msgid "OAuth Providers"
+msgstr ""
+
+#: src/Modules/Settings.php:239
+msgid "General Settings"
+msgstr ""
+
+#: src/Modules/Settings.php:247
 msgid "Create New User"
 msgstr ""
 
-#: src/Modules/Settings.php:141
-msgid "Enable One Tap Login"
-msgstr ""
-
-#: src/Modules/Settings.php:150
-msgid "One Tap Login Locations"
-msgstr ""
-
-#: src/Modules/Settings.php:159
+#: src/Modules/Settings.php:256
 msgid "Whitelisted Domains"
 msgstr ""
 
-#: src/Modules/Settings.php:180
-msgid "Create oAuth Client ID and Client Secret at"
+#: src/Modules/Settings.php:267
+msgid "Google One Tap Login"
 msgstr ""
 
-#: src/Modules/Settings.php:217
+#: src/Modules/Settings.php:270
+msgid "Configure Google's One Tap authentication feature."
+msgstr ""
+
+#: src/Modules/Settings.php:278
+msgid "Enable One Tap Login"
+msgstr ""
+
+#: src/Modules/Settings.php:287
+msgid "One Tap Login Locations"
+msgstr ""
+
+#: src/Modules/Settings.php:314
+msgid "Manage your OAuth login providers. Drag to reorder how buttons appear on the login form."
+msgstr ""
+
+#: src/Modules/Settings.php:320
+msgid "Provider"
+msgstr ""
+
+#: src/Modules/Settings.php:321
+msgid "Type"
+msgstr ""
+
+#: src/Modules/Settings.php:322
+msgid "Status"
+msgstr ""
+
+#: src/Modules/Settings.php:323
+msgid "Actions"
+msgstr ""
+
+#: src/Modules/Settings.php:333
+msgid "No providers configured. Add one below."
+msgstr ""
+
+#: src/Modules/Settings.php:347
+msgid "Add Google"
+msgstr ""
+
+#: src/Modules/Settings.php:350
+#: src/Modules/Settings.php:714
+msgid "Add Custom OAuth Provider"
+msgstr ""
+
+#: src/Modules/Settings.php:390
+#: src/Providers/GoogleProvider.php:93
+msgid "Google"
+msgstr ""
+
+#: src/Modules/Settings.php:390
+msgid "Custom OAuth"
+msgstr ""
+
+#: src/Modules/Settings.php:393
+#: src/Modules/Settings.php:486
+msgid "Enabled"
+msgstr ""
+
+#: src/Modules/Settings.php:395
+msgid "Disabled"
+msgstr ""
+
+#: src/Modules/Settings.php:397
+msgid "Incomplete"
+msgstr ""
+
+#: src/Modules/Settings.php:402
+msgid "Edit"
+msgstr ""
+
+#: src/Modules/Settings.php:407
+msgid "Delete"
+msgstr ""
+
+#: src/Modules/Settings.php:469
+msgid "Add Google Provider"
+msgstr ""
+
+#: src/Modules/Settings.php:469
+msgid "Add Custom Provider"
+msgstr ""
+
+#. translators: %s: Provider name
+#: src/Modules/Settings.php:472
+#, php-format
+msgid "Edit: %s"
+msgstr ""
+
+#: src/Modules/Settings.php:490
+msgid "Enable this provider for login"
+msgstr ""
+
+#: src/Modules/Settings.php:497
+msgid "Provider Name"
+msgstr ""
+
+#: src/Modules/Settings.php:505
+msgid "Client ID"
+msgstr ""
+
+#: src/Modules/Settings.php:514
+#: src/Modules/Settings.php:1230
+msgid "Get your Google OAuth Client ID from"
+msgstr ""
+
+#: src/Modules/Settings.php:527
+msgid "Client Secret"
+msgstr ""
+
+#: src/Modules/Settings.php:536
+msgid "Authorize URL"
+msgstr ""
+
+#: src/Modules/Settings.php:542
+msgid "Token URL"
+msgstr ""
+
+#: src/Modules/Settings.php:548
+msgid "User Info URL"
+msgstr ""
+
+#: src/Modules/Settings.php:554
+msgid "Scopes"
+msgstr ""
+
+#: src/Modules/Settings.php:557
+msgid "Comma-separated list of OAuth scopes."
+msgstr ""
+
+#: src/Modules/Settings.php:561
+msgid "Callback URL"
+msgstr ""
+
+#: src/Modules/Settings.php:564
+msgid "The URL the provider will redirect to after authentication. Default is your login page."
+msgstr ""
+
+#: src/Modules/Settings.php:571
+msgid "Button Appearance"
+msgstr ""
+
+#: src/Modules/Settings.php:574
+msgid "Button Text"
+msgstr ""
+
+#. translators: %s: Provider name
+#: src/Modules/Settings.php:576
+#: src/Providers/CustomProvider.php:184
+#, php-format
+msgid "Login with %s"
+msgstr ""
+
+#: src/Modules/Settings.php:580
+msgid "Button Icon URL"
+msgstr ""
+
+#: src/Modules/Settings.php:583
+msgid "URL to a custom icon image. Displayed on the left side of the button."
+msgstr ""
+
+#: src/Modules/Settings.php:587
+msgid "Background Color"
+msgstr ""
+
+#: src/Modules/Settings.php:593
+msgid "Text Color"
+msgstr ""
+
+#: src/Modules/Settings.php:599
+msgid "Border Color"
+msgstr ""
+
+#: src/Modules/Settings.php:605
+msgid "Border Width"
+msgstr ""
+
+#: src/Modules/Settings.php:611
+msgid "Border Radius"
+msgstr ""
+
+#: src/Modules/Settings.php:617
+msgid "Padding"
+msgstr ""
+
+#: src/Modules/Settings.php:623
+msgid "Font Size"
+msgstr ""
+
+#: src/Modules/Settings.php:629
+msgid "Hover Background"
+msgstr ""
+
+#: src/Modules/Settings.php:635
+msgid "Hover Text Color"
+msgstr ""
+
+#: src/Modules/Settings.php:641
+msgid "Hover Border Color"
+msgstr ""
+
+#: src/Modules/Settings.php:650
+msgid "Field Mappings"
+msgstr ""
+
+#: src/Modules/Settings.php:651
+msgid "Map provider response fields to user data. Use dot notation for nested fields (e.g., \"user.email\")."
+msgstr ""
+
+#: src/Modules/Settings.php:678
+msgid "Avatar"
+msgstr ""
+
+#: src/Modules/Settings.php:688
+#: src/Modules/Settings.php:691
+msgid "Save"
+msgstr ""
+
+#: src/Modules/Settings.php:691
+#: src/Modules/Settings.php:699
+msgid "Close"
+msgstr ""
+
+#: src/Modules/Settings.php:695
+msgid "Test Configuration"
+msgstr ""
+
+#: src/Modules/Settings.php:695
+msgid "Map Fields"
+msgstr ""
+
+#: src/Modules/Settings.php:717
+msgid "Provider Slug"
+msgstr ""
+
+#: src/Modules/Settings.php:720
+msgid "Unique identifier (lowercase, no spaces). Example: github, facebook"
+msgstr ""
+
+#: src/Modules/Settings.php:847
+msgid "Test Configuration & Map Fields"
+msgstr ""
+
+#: src/Modules/Settings.php:851
+msgid "Initiating..."
+msgstr ""
+
+#: src/Modules/Settings.php:862
+msgid "Failed to initiate test login."
+msgstr ""
+
+#: src/Modules/Settings.php:866
+msgid "Request failed. Please try again."
+msgstr ""
+
+#: src/Modules/Settings.php:1267
 msgid "Create a new user account if it does not exist already"
 msgstr ""
 
 #. translators: %1s will be replaced by page link
-#: src/Modules/Settings.php:224
+#: src/Modules/Settings.php:1274
 #, php-format
 msgid "If this setting is checked, a new user will be created even if <a target=\"_blank\" href=\"%1s\">membership setting</a> is off."
 msgstr ""
 
-#: src/Modules/Settings.php:245
-msgid "One Tap Login"
+#: src/Modules/Settings.php:1295
+msgid "Enable Google One Tap Login"
 msgstr ""
 
-#: src/Modules/Settings.php:248
+#: src/Modules/Settings.php:1298
 msgid "Warning: One Tap login is more convenient, but it bypasses two-factor authentication (2FA)."
 msgstr ""
 
-#: src/Modules/Settings.php:268
+#: src/Modules/Settings.php:1318
 msgid "Enable One Tap Login Only on Login Screen"
 msgstr ""
 
-#: src/Modules/Settings.php:275
+#: src/Modules/Settings.php:1325
 msgid "Enable One Tap Login Site-wide"
 msgstr ""
 
-#: src/Modules/Settings.php:314
+#: src/Modules/Settings.php:1364
 msgid "Add each domain comma separated"
 msgstr ""
 
-#: src/Modules/Settings.php:326
+#: src/Modules/Settings.php:1376
+#: src/Modules/Settings.php:1392
 msgid "OAuth Login Settings"
 msgstr ""
 
-#: src/Modules/Shortcode.php:101
+#: src/Modules/Shortcode.php:120
+#: src/Providers/GoogleProvider.php:190
 #: templates/google-login-button.php:14
 msgid "Login with Google"
 msgstr ""
 
-#: src/Plugin.php:160
+#: src/Plugin.php:161
 msgid "Settings"
 msgstr ""
 
@@ -162,10 +553,6 @@ msgstr ""
 msgid "User data is stale! Please try again."
 msgstr ""
 
-#: src/Providers/GoogleProvider.php:93
-msgid "Google"
-msgstr ""
-
 #: src/Utils/Authenticator.php:58
 msgid "Email needs to be present for the user."
 msgstr ""
@@ -184,12 +571,12 @@ msgstr ""
 msgid "Access token must be set to make this API call"
 msgstr ""
 
-#: src/Utils/GoogleClient.php:204
-msgid "Could not retrieve the access token, please try again."
-msgstr ""
-
 #: src/Utils/GoogleClient.php:230
 msgid "Could not retrieve the user information, please try again."
+msgstr ""
+
+#: src/Utils/LoginButtonRenderer.php:68
+msgid "or"
 msgstr ""
 
 #: templates/google-login-button.php:24

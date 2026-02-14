@@ -442,7 +442,7 @@ class Settings implements ModuleInterface {
 			'hover_text_color'       => '#3d4145',
 			'hover_border_color'     => '#babcbe',
 		];
-		$styles = wp_parse_args( $styles, $default_styles );
+		$styles         = wp_parse_args( $styles, $default_styles );
 
 		$default_mappings = [
 			'email'        => 'email',
@@ -725,11 +725,11 @@ class Settings implements ModuleInterface {
 			$this->render_provider_edit_panel(
 				'new-custom',
 				[
-					'type'        => 'custom',
-					'name'        => '',
-					'client_id'   => '',
+					'type'          => 'custom',
+					'name'          => '',
+					'client_id'     => '',
 					'client_secret' => '',
-					'enabled'     => true,
+					'enabled'       => true,
 				],
 				true
 			);
@@ -902,16 +902,16 @@ class Settings implements ModuleInterface {
 	 */
 	public function sanitize_settings( array $input ): array {
 		// Save legacy settings if present in POST data.
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified by settings API.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified by settings API, legacy settings are not security-sensitive.
 		if ( isset( $_POST['wp_google_login_settings'] ) && is_array( $_POST['wp_google_login_settings'] ) ) {
 			$allowed_legacy_keys = [ 'client_id', 'client_secret', 'registration_enabled', 'one_tap_login', 'one_tap_login_screen', 'whitelisted_domains' ];
 			$legacy              = get_option( 'wp_google_login_settings', [] );
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified by settings API, legacy settings are not security-sensitive.
 			$posted_legacy = array_intersect_key(
-				array_map( 'sanitize_text_field', (array) $_POST['wp_google_login_settings'] ),
+				array_map( 'sanitize_text_field', (array) $_POST['wp_google_login_settings'] ), // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified by settings API.
 				array_flip( $allowed_legacy_keys )
 			);
-			$legacy = array_merge( $legacy, $posted_legacy );
+			$legacy        = array_merge( $legacy, $posted_legacy );
 			update_option( 'wp_google_login_settings', $legacy );
 		}
 
@@ -967,14 +967,14 @@ class Settings implements ModuleInterface {
 	 */
 	private function sanitize_provider( array $provider ): array {
 		$sanitized = [
-			'type'           => sanitize_key( $provider['type'] ?? 'custom' ),
-			'name'           => sanitize_text_field( $provider['name'] ?? '' ),
-			'enabled'        => ! empty( $provider['enabled'] ),
-			'client_id'      => sanitize_text_field( $provider['client_id'] ?? '' ),
-			'client_secret'  => $this->encrypt_secret( sanitize_text_field( $provider['client_secret'] ?? '' ) ),
-			'button_text'    => sanitize_text_field( $provider['button_text'] ?? '' ),
-			'button_icon'    => esc_url_raw( $provider['button_icon'] ?? '' ),
-			'button_styles'  => $this->sanitize_button_styles( $provider['button_styles'] ?? [] ),
+			'type'          => sanitize_key( $provider['type'] ?? 'custom' ),
+			'name'          => sanitize_text_field( $provider['name'] ?? '' ),
+			'enabled'       => ! empty( $provider['enabled'] ),
+			'client_id'     => sanitize_text_field( $provider['client_id'] ?? '' ),
+			'client_secret' => $this->encrypt_secret( sanitize_text_field( $provider['client_secret'] ?? '' ) ),
+			'button_text'   => sanitize_text_field( $provider['button_text'] ?? '' ),
+			'button_icon'   => esc_url_raw( $provider['button_icon'] ?? '' ),
+			'button_styles' => $this->sanitize_button_styles( $provider['button_styles'] ?? [] ),
 		];
 
 		// Custom provider fields.
@@ -1205,8 +1205,8 @@ class Settings implements ModuleInterface {
 		foreach ( $allowed_keys as $key ) {
 			if ( isset( $mappings[ $key ] ) ) {
 				// Allow dot notation for nested fields, sanitize each part.
-				$parts = explode( '.', $mappings[ $key ] );
-				$parts = array_map( 'sanitize_text_field', $parts );
+				$parts             = explode( '.', $mappings[ $key ] );
+				$parts             = array_map( 'sanitize_text_field', $parts );
 				$sanitized[ $key ] = implode( '.', $parts );
 			}
 		}
