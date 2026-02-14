@@ -13,6 +13,7 @@ namespace Circularlizard\OAuthLogin\Modules;
 use Circularlizard\OAuthLogin\Interfaces\Module as ModuleInterface;
 use Circularlizard\OAuthLogin\Utils\Helper;
 use Circularlizard\OAuthLogin\Utils\GoogleClient;
+use Circularlizard\OAuthLogin\Utils\LoginButtonRenderer;
 use function Circularlizard\OAuthLogin\plugin;
 
 /**
@@ -49,6 +50,24 @@ class Shortcode implements ModuleInterface {
 	 * @var Assets
 	 */
 	private $assets;
+
+	/**
+	 * Login button renderer.
+	 *
+	 * @var LoginButtonRenderer|null
+	 */
+	private $button_renderer;
+
+	/**
+	 * Set the login button renderer.
+	 *
+	 * @param LoginButtonRenderer $renderer Button renderer.
+	 *
+	 * @return void
+	 */
+	public function set_button_renderer( LoginButtonRenderer $renderer ): void {
+		$this->button_renderer = $renderer;
+	}
 
 	/**
 	 * Shortcode constructor.
@@ -121,6 +140,13 @@ class Shortcode implements ModuleInterface {
 		Helper::remove_redirect_state_filter();
 
 		remove_filter( 'rtcamp.google_redirect_url', [ $this, 'redirect_url' ] );
+
+		// Use multi-provider renderer if available.
+		if ( null !== $this->button_renderer ) {
+			return $this->button_renderer->render( false );
+		}
+
+		// Fallback to legacy Google-only button.
 		$template = trailingslashit( plugin()->template_dir ) . 'google-login-button.php';
 
 		return Helper::render_template( $template, $attrs, false );

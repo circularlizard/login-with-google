@@ -75,6 +75,7 @@ class Plugin {
 		'shortcode',
 		'one_tap_login',
 		'google_login_block',
+		'provider_test_login',
 	];
 
 	/**

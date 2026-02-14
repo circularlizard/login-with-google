@@ -85,4 +85,41 @@ interface OAuthProvider {
 	 * @return stdClass Normalized user data with email, name, etc.
 	 */
 	public function parse_user_response( stdClass $response ): stdClass;
+
+	/**
+	 * Get the callback URL for this provider.
+	 *
+	 * @return string Callback URL.
+	 */
+	public function get_callback_url(): string;
+
+	/**
+	 * Get the button text for this provider.
+	 *
+	 * @return string Button text (e.g., 'Login with Google').
+	 */
+	public function get_button_text(): string;
+
+	/**
+	 * Get the button icon URL for this provider.
+	 *
+	 * @return string Icon URL or empty string for default.
+	 */
+	public function get_button_icon(): string;
+
+	/**
+	 * Get the button styles for this provider.
+	 *
+	 * @return array Associative array of CSS properties.
+	 */
+	public function get_button_styles(): array;
+
+	/**
+	 * Get the field mappings for this provider.
+	 *
+	 * Maps provider response fields to normalized user fields.
+	 *
+	 * @return array Associative array of field mappings.
+	 */
+	public function get_field_mappings(): array;
 }

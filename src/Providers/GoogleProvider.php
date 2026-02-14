@@ -171,4 +171,66 @@ class GoogleProvider implements OAuthProvider {
 
 		return $user;
 	}
+
+	/**
+	 * Get the callback URL for Google.
+	 *
+	 * @return string Callback URL (defaults to wp-login.php).
+	 */
+	public function get_callback_url(): string {
+		return wp_login_url();
+	}
+
+	/**
+	 * Get the button text for Google.
+	 *
+	 * @return string Button text.
+	 */
+	public function get_button_text(): string {
+		return __( 'Login with Google', 'oauth-login' );
+	}
+
+	/**
+	 * Get the button icon URL for Google.
+	 *
+	 * @return string Icon URL (empty for default Google icon).
+	 */
+	public function get_button_icon(): string {
+		return '';
+	}
+
+	/**
+	 * Get the button styles for Google.
+	 *
+	 * @return array Default Google button styles.
+	 */
+	public function get_button_styles(): array {
+		return [
+			'background_color'       => '#ffffff',
+			'text_color'             => '#3d4145',
+			'border_color'           => '#ccced0',
+			'border_width'           => '1px',
+			'border_radius'          => '4px',
+			'padding'                => '10px 15px',
+			'font_size'              => '14px',
+			'hover_background_color' => '#f7f7f7',
+			'hover_text_color'       => '#3d4145',
+			'hover_border_color'     => '#babcbe',
+		];
+	}
+
+	/**
+	 * Get the field mappings for Google.
+	 *
+	 * @return array Field mappings.
+	 */
+	public function get_field_mappings(): array {
+		return [
+			'email'        => 'email',
+			'first_name'   => 'given_name',
+			'last_name'    => 'family_name',
+			'display_name' => 'name',
+			'avatar'       => 'picture',
+		];
+	}
 }

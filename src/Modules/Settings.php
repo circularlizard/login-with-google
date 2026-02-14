@@ -122,11 +122,27 @@ class Settings implements ModuleInterface {
 		 */
 		add_action( 'admin_init', [ $this, 'register_settings' ] );
 		add_action( 'admin_menu', [ $this, 'settings_page' ] );
+		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_scripts' ] );
 
 		/**
 		 * Filters.
 		 */
 		// Add filters here.
+	}
+
+	/**
+	 * Enqueue admin scripts for the settings page.
+	 *
+	 * @param string $hook_suffix The current admin page.
+	 *
+	 * @return void
+	 */
+	public function enqueue_admin_scripts( string $hook_suffix ): void {
+		if ( 'settings_page_oauth-login' !== $hook_suffix ) {
+			return;
+		}
+
+		wp_enqueue_script( 'jquery-ui-sortable' );
 	}
 
 	/**
@@ -177,7 +193,6 @@ class Settings implements ModuleInterface {
 	 * @return void
 	 */
 	public function register_settings(): void {
-		// Register both old (for backward compat) and new settings.
 		register_setting( 'wp_google_login', 'wp_google_login_settings' );
 		register_setting(
 			'wp_oauth_login',
@@ -187,8 +202,13 @@ class Settings implements ModuleInterface {
 			]
 		);
 
-		// Register dynamic provider sections.
-		$this->register_provider_settings();
+		// Providers section - shows the provider list table.
+		add_settings_section(
+			'wp_oauth_providers_section',
+			__( 'OAuth Providers', 'oauth-login' ),
+			[ $this, 'render_providers_section' ],
+			'oauth-login'
+		);
 
 		// General settings section.
 		add_settings_section(
@@ -217,375 +237,613 @@ class Settings implements ModuleInterface {
 			[ 'label_for' => 'whitelisted-domains' ]
 		);
 
-		// Google One Tap section (Google-specific).
-		add_settings_section(
-			'wp_google_one_tap_section',
-			__( 'Google One Tap Login', 'oauth-login' ),
-			function () {
-				echo wp_kses_post(
-					'<p>' . esc_html__( 'Configure Google\'s One Tap authentication feature.', 'oauth-login' ) . '</p>'
-				);
-			},
-			'oauth-login'
-		);
-
-		add_settings_field(
-			'wp_google_one_tap_login',
-			__( 'Enable One Tap Login', 'oauth-login' ),
-			[ $this, 'one_tap_login' ],
-			'oauth-login',
-			'wp_google_one_tap_section',
-			[ 'label_for' => 'one-tap-login' ]
-		);
-
-		add_settings_field(
-			'wp_google_one_tap_login_screen',
-			__( 'One Tap Login Locations', 'oauth-login' ),
-			[ $this, 'one_tap_login_screens' ],
-			'oauth-login',
-			'wp_google_one_tap_section',
-			[ 'label_for' => 'one-tap-login-screen' ]
-		);
-
-		// Custom providers section.
-		add_settings_section(
-			'wp_oauth_custom_providers_section',
-			__( 'Custom OAuth Providers', 'oauth-login' ),
-			function () {
-				echo wp_kses_post(
-					'<p>' . esc_html__( 'Add custom OAuth 2.0 providers. These providers will appear in the login form.', 'oauth-login' ) . '</p>'
-				);
-			},
-			'oauth-login'
-		);
-
-		add_settings_field(
-			'wp_oauth_custom_providers',
-			__( 'Add Custom Provider', 'oauth-login' ),
-			[ $this, 'render_custom_provider_form' ],
-			'oauth-login',
-			'wp_oauth_custom_providers_section'
-		);
-	}
-
-	/**
-	 * Register settings for each provider in the registry.
-	 *
-	 * @return void
-	 */
-	public function register_provider_settings(): void {
-		if ( null === $this->registry ) {
-			// Fallback: register only Google section if no registry.
-			$this->register_legacy_google_section();
-			return;
-		}
-
-		$providers = $this->registry->get_all();
-
-		if ( empty( $providers ) ) {
-			return;
-		}
-
-		foreach ( $providers as $provider_id => $provider ) {
-			$section_id = 'wp_oauth_provider_' . $provider_id;
-
+		// Google One Tap section (Google-specific, only if Google is configured).
+		if ( $this->is_provider_enabled( 'google' ) ) {
 			add_settings_section(
-				$section_id,
-				/* translators: %s: Provider name */
-				sprintf( __( '%s Settings', 'oauth-login' ), $provider->get_provider_name() ),
-				function () use ( $provider ) {
+				'wp_google_one_tap_section',
+				__( 'Google One Tap Login', 'oauth-login' ),
+				function () {
 					echo wp_kses_post(
-						'<p>' . sprintf(
-							/* translators: %s: Provider name */
-							esc_html__( 'Configure %s OAuth 2.0 authentication.', 'oauth-login' ),
-							esc_html( $provider->get_provider_name() )
-						) . '</p>'
+						'<p>' . esc_html__( 'Configure Google\'s One Tap authentication feature.', 'oauth-login' ) . '</p>'
 					);
 				},
 				'oauth-login'
 			);
 
 			add_settings_field(
-				'wp_oauth_' . $provider_id . '_enabled',
-				__( 'Enabled', 'oauth-login' ),
-				[ $this, 'render_provider_enabled_field' ],
+				'wp_google_one_tap_login',
+				__( 'Enable One Tap Login', 'oauth-login' ),
+				[ $this, 'one_tap_login' ],
 				'oauth-login',
-				$section_id,
-				[
-					'provider_id' => $provider_id,
-					'label_for'   => 'provider-' . $provider_id . '-enabled',
-				]
+				'wp_google_one_tap_section',
+				[ 'label_for' => 'one-tap-login' ]
 			);
 
 			add_settings_field(
-				'wp_oauth_' . $provider_id . '_client_id',
-				__( 'Client ID', 'oauth-login' ),
-				[ $this, 'render_provider_client_id_field' ],
+				'wp_google_one_tap_login_screen',
+				__( 'One Tap Login Locations', 'oauth-login' ),
+				[ $this, 'one_tap_login_screens' ],
 				'oauth-login',
-				$section_id,
-				[
-					'provider_id' => $provider_id,
-					'label_for'   => 'provider-' . $provider_id . '-client-id',
-				]
-			);
-
-			add_settings_field(
-				'wp_oauth_' . $provider_id . '_client_secret',
-				__( 'Client Secret', 'oauth-login' ),
-				[ $this, 'render_provider_client_secret_field' ],
-				'oauth-login',
-				$section_id,
-				[
-					'provider_id' => $provider_id,
-					'label_for'   => 'provider-' . $provider_id . '-client-secret',
-				]
+				'wp_google_one_tap_section',
+				[ 'label_for' => 'one-tap-login-screen' ]
 			);
 		}
 	}
 
 	/**
-	 * Register legacy Google section for backward compatibility.
+	 * Get the provider order.
 	 *
-	 * @return void
+	 * @return array Ordered list of provider IDs.
 	 */
-	private function register_legacy_google_section(): void {
-		add_settings_section(
-			'wp_google_login_section',
-			__( 'Google Settings', 'oauth-login' ),
-			function () {
-				echo wp_kses_post(
-					'<p>' . esc_html__( 'Configure Google OAuth 2.0 authentication.', 'oauth-login' ) . '</p>'
-				);
-			},
-			'oauth-login'
-		);
-
-		add_settings_field(
-			'wp_google_login_client_id',
-			__( 'Client ID', 'oauth-login' ),
-			[ $this, 'client_id_field' ],
-			'oauth-login',
-			'wp_google_login_section',
-			[ 'label_for' => 'client-id' ]
-		);
-
-		add_settings_field(
-			'wp_google_login_client_secret',
-			__( 'Client Secret', 'oauth-login' ),
-			[ $this, 'client_secret_field' ],
-			'oauth-login',
-			'wp_google_login_section',
-			[ 'label_for' => 'client-secret' ]
-		);
+	public function get_provider_order(): array {
+		return $this->provider_settings['provider_order'] ?? [];
 	}
 
 	/**
-	 * Render provider enabled checkbox field.
-	 *
-	 * @param array $args Field arguments.
+	 * Render the providers section with a list of all configured providers.
 	 *
 	 * @return void
 	 */
-	public function render_provider_enabled_field( array $args ): void {
-		$provider_id = $args['provider_id'];
-		$enabled     = $this->get_provider_setting( $provider_id, 'enabled', true );
-		$field_id    = 'provider-' . $provider_id . '-enabled';
-		$field_name  = 'wp_oauth_login_settings[providers][' . $provider_id . '][enabled]';
+	public function render_providers_section(): void {
+		$providers = $this->get_all_provider_configs();
+		$order     = $this->get_provider_order();
 		?>
-		<label style='display:block;margin-top:6px;'>
-			<input type='checkbox'
-				name='<?php echo esc_attr( $field_name ); ?>'
-				id='<?php echo esc_attr( $field_id ); ?>'
-				<?php checked( $enabled ); ?>
-				value='1'>
-			<?php esc_html_e( 'Enable this provider for login', 'oauth-login' ); ?>
-		</label>
+		<p><?php esc_html_e( 'Manage your OAuth login providers. Drag to reorder how buttons appear on the login form.', 'oauth-login' ); ?></p>
+
+		<table class="widefat oauth-providers-table" id="oauth-providers-table">
+			<thead>
+				<tr>
+					<th style="width:30px;"></th>
+					<th><?php esc_html_e( 'Provider', 'oauth-login' ); ?></th>
+					<th><?php esc_html_e( 'Type', 'oauth-login' ); ?></th>
+					<th><?php esc_html_e( 'Status', 'oauth-login' ); ?></th>
+					<th><?php esc_html_e( 'Actions', 'oauth-login' ); ?></th>
+				</tr>
+			</thead>
+			<tbody id="oauth-providers-list">
+				<?php if ( ! empty( $providers ) ) : ?>
+					<?php foreach ( $providers as $provider_id => $config ) : ?>
+						<?php $this->render_provider_row( $provider_id, $config ); ?>
+					<?php endforeach; ?>
+				<?php else : ?>
+					<tr class="oauth-no-providers">
+						<td colspan="5"><?php esc_html_e( 'No providers configured. Add one below.', 'oauth-login' ); ?></td>
+					</tr>
+				<?php endif; ?>
+			</tbody>
+		</table>
+
+		<!-- Hidden field for provider order -->
+		<input type="hidden" name="wp_oauth_login_settings[provider_order]" id="oauth-provider-order" value="<?php echo esc_attr( implode( ',', $order ) ); ?>" />
+
+		<div style="margin-top: 15px;">
+			<button type="button" class="button" id="oauth-add-google-provider" <?php echo $this->has_provider_config( 'google' ) ? 'disabled' : ''; ?>>
+				<?php esc_html_e( 'Add Google', 'oauth-login' ); ?>
+			</button>
+			<button type="button" class="button" id="oauth-add-custom-provider">
+				<?php esc_html_e( 'Add Custom OAuth Provider', 'oauth-login' ); ?>
+			</button>
+		</div>
+
+		<!-- Provider edit panels (hidden by default, shown via JS) -->
+		<?php foreach ( $providers as $provider_id => $config ) : ?>
+			<?php $this->render_provider_edit_panel( $provider_id, $config ); ?>
+		<?php endforeach; ?>
+
+		<!-- Template for new Google provider -->
+		<div id="oauth-new-google-panel" class="oauth-provider-panel" style="display:none;">
+			<?php $this->render_provider_edit_panel( 'google', $this->get_default_google_config(), true ); ?>
+		</div>
+
+		<!-- Template for new custom provider -->
+		<div id="oauth-new-custom-panel" class="oauth-provider-panel" style="display:none;">
+			<?php $this->render_new_custom_provider_form(); ?>
+		</div>
+
+		<?php $this->render_provider_admin_script(); ?>
 		<?php
 	}
 
 	/**
-	 * Render provider client ID field.
+	 * Render a single provider row in the providers table.
 	 *
-	 * @param array $args Field arguments.
+	 * @param string $provider_id Provider ID.
+	 * @param array  $config      Provider configuration.
 	 *
 	 * @return void
 	 */
-	public function render_provider_client_id_field( array $args ): void {
-		$provider_id = $args['provider_id'];
-		$value       = $this->get_provider_setting( $provider_id, 'client_id', '' );
-		$field_id    = 'provider-' . $provider_id . '-client-id';
-		$field_name  = 'wp_oauth_login_settings[providers][' . $provider_id . '][client_id]';
+	private function render_provider_row( string $provider_id, array $config ): void {
+		$name       = $config['name'] ?? $provider_id;
+		$type       = $config['type'] ?? 'custom';
+		$has_creds  = ! empty( $config['client_id'] ) && ! empty( $config['client_secret'] );
+		$is_enabled = $config['enabled'] ?? true;
+		?>
+		<tr data-provider-id="<?php echo esc_attr( $provider_id ); ?>" class="oauth-provider-row">
+			<td class="oauth-drag-handle" style="cursor:move;text-align:center;">&#9776;</td>
+			<td><strong><?php echo esc_html( $name ); ?></strong> <code>(<?php echo esc_html( $provider_id ); ?>)</code></td>
+			<td><?php echo 'google' === $type ? esc_html__( 'Google', 'oauth-login' ) : esc_html__( 'Custom OAuth', 'oauth-login' ); ?></td>
+			<td>
+				<?php if ( $has_creds && $is_enabled ) : ?>
+					<span style="color:green;">&#10003; <?php esc_html_e( 'Enabled', 'oauth-login' ); ?></span>
+				<?php elseif ( $has_creds && ! $is_enabled ) : ?>
+					<span style="color:gray;">&#9679; <?php esc_html_e( 'Disabled', 'oauth-login' ); ?></span>
+				<?php else : ?>
+					<span style="color:orange;">&#9888; <?php esc_html_e( 'Incomplete', 'oauth-login' ); ?></span>
+				<?php endif; ?>
+			</td>
+			<td>
+				<button type="button" class="button button-small oauth-edit-provider" data-provider="<?php echo esc_attr( $provider_id ); ?>">
+					<?php esc_html_e( 'Edit', 'oauth-login' ); ?>
+				</button>
+				<?php if ( 'google' !== $provider_id ) : ?>
+					<label style="margin-left:10px;">
+						<input type="checkbox" name="wp_oauth_login_settings[providers][<?php echo esc_attr( $provider_id ); ?>][delete]" value="1" class="oauth-delete-provider" />
+						<?php esc_html_e( 'Delete', 'oauth-login' ); ?>
+					</label>
+				<?php endif; ?>
+			</td>
+		</tr>
+		<?php
+	}
 
-		// Check for legacy Google settings.
-		if ( 'google' === $provider_id && empty( $value ) ) {
-			$value = $this->client_id ?? '';
+	/**
+	 * Render the edit panel for a provider.
+	 *
+	 * @param string $provider_id Provider ID.
+	 * @param array  $config      Provider configuration.
+	 * @param bool   $is_new      Whether this is a new provider form.
+	 *
+	 * @return void
+	 */
+	public function render_provider_edit_panel( string $provider_id, array $config, bool $is_new = false ): void {
+		$prefix    = $is_new ? 'wp_oauth_login_settings[new_provider]' : 'wp_oauth_login_settings[providers][' . $provider_id . ']';
+		$type      = $config['type'] ?? 'custom';
+		$is_google = 'google' === $type || 'google' === $provider_id;
+		$name      = $config['name'] ?? '';
+
+		$styles   = $config['button_styles'] ?? [];
+		$mappings = $config['field_mappings'] ?? [];
+
+		$default_styles = [
+			'background_color'       => '#ffffff',
+			'text_color'             => '#3d4145',
+			'border_color'           => '#ccced0',
+			'border_width'           => '1px',
+			'border_radius'          => '4px',
+			'padding'                => '10px 15px',
+			'font_size'              => '14px',
+			'hover_background_color' => '#f7f7f7',
+			'hover_text_color'       => '#3d4145',
+			'hover_border_color'     => '#babcbe',
+		];
+		$styles = wp_parse_args( $styles, $default_styles );
+
+		$default_mappings = [
+			'email'        => 'email',
+			'first_name'   => '',
+			'last_name'    => '',
+			'display_name' => '',
+			'avatar'       => '',
+		];
+		if ( $is_google ) {
+			$default_mappings = [
+				'email'        => 'email',
+				'first_name'   => 'given_name',
+				'last_name'    => 'family_name',
+				'display_name' => 'name',
+				'avatar'       => 'picture',
+			];
 		}
+		$mappings = wp_parse_args( $mappings, $default_mappings );
 		?>
-		<input type='text'
-			name='<?php echo esc_attr( $field_name ); ?>'
-			id='<?php echo esc_attr( $field_id ); ?>'
-			value='<?php echo esc_attr( $value ); ?>'
-			class='regular-text'
-			autocomplete='off' />
-		<?php
-	}
+		<div class="oauth-provider-edit-panel" id="oauth-panel-<?php echo esc_attr( $provider_id ); ?>" style="<?php echo $is_new ? '' : 'display:none;'; ?> margin-top:15px; padding:15px; border:1px solid #ccd0d4; background:#f9f9f9;">
+			<h3>
+				<?php
+				if ( $is_new ) {
+					echo esc_html( $is_google ? __( 'Add Google Provider', 'oauth-login' ) : __( 'Add Custom Provider', 'oauth-login' ) );
+				} else {
+					/* translators: %s: Provider name */
+					printf( esc_html__( 'Edit: %s', 'oauth-login' ), esc_html( $name ?: $provider_id ) );
+				}
+				?>
+			</h3>
 
-	/**
-	 * Render provider client secret field.
-	 *
-	 * @param array $args Field arguments.
-	 *
-	 * @return void
-	 */
-	public function render_provider_client_secret_field( array $args ): void {
-		$provider_id = $args['provider_id'];
-		$value       = $this->get_provider_setting( $provider_id, 'client_secret', '' );
-		$field_id    = 'provider-' . $provider_id . '-client-secret';
-		$field_name  = 'wp_oauth_login_settings[providers][' . $provider_id . '][client_secret]';
-
-		// Check for legacy Google settings.
-		if ( 'google' === $provider_id && empty( $value ) ) {
-			$value = $this->client_secret ?? '';
-		}
-		?>
-		<input type='password'
-			name='<?php echo esc_attr( $field_name ); ?>'
-			id='<?php echo esc_attr( $field_id ); ?>'
-			value='<?php echo esc_attr( $value ); ?>'
-			class='regular-text'
-			autocomplete='off' />
-		<?php
-	}
-
-	/**
-	 * Render the custom provider form.
-	 *
-	 * @return void
-	 */
-	public function render_custom_provider_form(): void {
-		$custom_providers = $this->provider_settings['custom_providers'] ?? [];
-		?>
-		<div id="oauth-custom-providers">
-			<?php if ( ! empty( $custom_providers ) ) : ?>
-				<table class="widefat" style="margin-bottom: 20px;">
-					<thead>
-						<tr>
-							<th><?php esc_html_e( 'Provider', 'oauth-login' ); ?></th>
-							<th><?php esc_html_e( 'Slug', 'oauth-login' ); ?></th>
-							<th><?php esc_html_e( 'Status', 'oauth-login' ); ?></th>
-							<th><?php esc_html_e( 'Actions', 'oauth-login' ); ?></th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php foreach ( $custom_providers as $slug => $provider ) : ?>
-							<tr>
-								<td><?php echo esc_html( $provider['name'] ?? $slug ); ?></td>
-								<td><code><?php echo esc_html( $slug ); ?></code></td>
-								<td>
-									<?php if ( ! empty( $provider['client_id'] ) && ! empty( $provider['client_secret'] ) ) : ?>
-										<span style="color: green;">✓ <?php esc_html_e( 'Configured', 'oauth-login' ); ?></span>
-									<?php else : ?>
-										<span style="color: orange;">⚠ <?php esc_html_e( 'Incomplete', 'oauth-login' ); ?></span>
-									<?php endif; ?>
-								</td>
-								<td>
-									<label>
-										<input type="checkbox"
-											name="wp_oauth_login_settings[custom_providers][<?php echo esc_attr( $slug ); ?>][delete]"
-											value="1">
-										<?php esc_html_e( 'Delete', 'oauth-login' ); ?>
-									</label>
-								</td>
-							</tr>
-							<!-- Hidden fields to preserve existing data -->
-							<input type="hidden" name="wp_oauth_login_settings[custom_providers][<?php echo esc_attr( $slug ); ?>][name]" value="<?php echo esc_attr( $provider['name'] ?? '' ); ?>">
-							<input type="hidden" name="wp_oauth_login_settings[custom_providers][<?php echo esc_attr( $slug ); ?>][authorize_url]" value="<?php echo esc_attr( $provider['authorize_url'] ?? '' ); ?>">
-							<input type="hidden" name="wp_oauth_login_settings[custom_providers][<?php echo esc_attr( $slug ); ?>][token_url]" value="<?php echo esc_attr( $provider['token_url'] ?? '' ); ?>">
-							<input type="hidden" name="wp_oauth_login_settings[custom_providers][<?php echo esc_attr( $slug ); ?>][user_info_url]" value="<?php echo esc_attr( $provider['user_info_url'] ?? '' ); ?>">
-							<input type="hidden" name="wp_oauth_login_settings[custom_providers][<?php echo esc_attr( $slug ); ?>][scopes]" value="<?php echo esc_attr( $provider['scopes'] ?? '' ); ?>">
-							<input type="hidden" name="wp_oauth_login_settings[custom_providers][<?php echo esc_attr( $slug ); ?>][client_id]" value="<?php echo esc_attr( $provider['client_id'] ?? '' ); ?>">
-							<input type="hidden" name="wp_oauth_login_settings[custom_providers][<?php echo esc_attr( $slug ); ?>][client_secret]" value="<?php echo esc_attr( $provider['client_secret'] ?? '' ); ?>">
-						<?php endforeach; ?>
-					</tbody>
-				</table>
+			<?php if ( $is_new && $is_google ) : ?>
+				<input type="hidden" name="<?php echo esc_attr( $prefix ); ?>[slug]" value="google" />
 			<?php endif; ?>
 
-			<details style="margin-top: 10px;">
-				<summary style="cursor: pointer; font-weight: bold;">
-					<?php esc_html_e( 'Add New Custom Provider', 'oauth-login' ); ?>
-				</summary>
-				<table class="form-table" role="presentation" style="margin-top: 10px;">
+			<input type="hidden" name="<?php echo esc_attr( $prefix ); ?>[type]" value="<?php echo esc_attr( $type ); ?>" />
+
+			<table class="form-table" role="presentation">
+				<!-- Enabled -->
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Enabled', 'oauth-login' ); ?></th>
+					<td>
+						<label>
+							<input type="checkbox" name="<?php echo esc_attr( $prefix ); ?>[enabled]" value="1" <?php checked( $config['enabled'] ?? true ); ?> />
+							<?php esc_html_e( 'Enable this provider for login', 'oauth-login' ); ?>
+						</label>
+					</td>
+				</tr>
+
+				<!-- Provider Name -->
+				<tr>
+					<th scope="row"><label><?php esc_html_e( 'Provider Name', 'oauth-login' ); ?></label></th>
+					<td>
+						<input type="text" name="<?php echo esc_attr( $prefix ); ?>[name]" value="<?php echo esc_attr( $name ); ?>" class="regular-text" <?php echo $is_google ? 'placeholder="Google"' : 'placeholder="My Provider"'; ?> />
+					</td>
+				</tr>
+
+				<!-- Client ID -->
+				<tr>
+					<th scope="row"><label><?php esc_html_e( 'Client ID', 'oauth-login' ); ?></label></th>
+					<td>
+						<input type="text" name="<?php echo esc_attr( $prefix ); ?>[client_id]" value="<?php echo esc_attr( $config['client_id'] ?? '' ); ?>" class="regular-text" autocomplete="off" />
+						<?php if ( $is_google ) : ?>
+							<p class="description">
+								<?php
+								echo wp_kses_post(
+									sprintf(
+										'%1s <a target="_blank" href="%2s">%3s</a>.',
+										esc_html__( 'Get your Google OAuth Client ID from', 'oauth-login' ),
+										'https://console.cloud.google.com/apis/credentials',
+										'Google Cloud Console'
+									)
+								);
+								?>
+							</p>
+						<?php endif; ?>
+					</td>
+				</tr>
+
+				<!-- Client Secret -->
+				<tr>
+					<th scope="row"><label><?php esc_html_e( 'Client Secret', 'oauth-login' ); ?></label></th>
+					<td>
+						<input type="password" name="<?php echo esc_attr( $prefix ); ?>[client_secret]" value="<?php echo esc_attr( $config['client_secret'] ?? '' ); ?>" class="regular-text" autocomplete="off" />
+					</td>
+				</tr>
+
+				<?php if ( ! $is_google ) : ?>
+					<!-- OAuth URLs (custom providers only) -->
 					<tr>
-						<th scope="row">
-							<label for="new-provider-slug"><?php esc_html_e( 'Provider Slug', 'oauth-login' ); ?></label>
-						</th>
+						<th scope="row"><label><?php esc_html_e( 'Authorize URL', 'oauth-login' ); ?></label></th>
 						<td>
-							<input type="text" id="new-provider-slug" name="wp_oauth_login_settings[new_provider][slug]" class="regular-text" pattern="[a-z0-9_-]+" placeholder="my-provider">
-							<p class="description"><?php esc_html_e( 'Unique identifier (lowercase, no spaces). Example: github, facebook', 'oauth-login' ); ?></p>
+							<input type="url" name="<?php echo esc_attr( $prefix ); ?>[authorize_url]" value="<?php echo esc_attr( $config['authorize_url'] ?? '' ); ?>" class="regular-text" placeholder="https://provider.com/oauth/authorize" />
 						</td>
 					</tr>
 					<tr>
-						<th scope="row">
-							<label for="new-provider-name"><?php esc_html_e( 'Provider Name', 'oauth-login' ); ?></label>
-						</th>
+						<th scope="row"><label><?php esc_html_e( 'Token URL', 'oauth-login' ); ?></label></th>
 						<td>
-							<input type="text" id="new-provider-name" name="wp_oauth_login_settings[new_provider][name]" class="regular-text" placeholder="My Provider">
-							<p class="description"><?php esc_html_e( 'Display name shown on login button.', 'oauth-login' ); ?></p>
+							<input type="url" name="<?php echo esc_attr( $prefix ); ?>[token_url]" value="<?php echo esc_attr( $config['token_url'] ?? '' ); ?>" class="regular-text" placeholder="https://provider.com/oauth/token" />
 						</td>
 					</tr>
 					<tr>
-						<th scope="row">
-							<label for="new-provider-authorize-url"><?php esc_html_e( 'Authorize URL', 'oauth-login' ); ?></label>
-						</th>
+						<th scope="row"><label><?php esc_html_e( 'User Info URL', 'oauth-login' ); ?></label></th>
 						<td>
-							<input type="url" id="new-provider-authorize-url" name="wp_oauth_login_settings[new_provider][authorize_url]" class="regular-text" placeholder="https://provider.com/oauth/authorize">
+							<input type="url" name="<?php echo esc_attr( $prefix ); ?>[user_info_url]" value="<?php echo esc_attr( $config['user_info_url'] ?? '' ); ?>" class="regular-text" placeholder="https://provider.com/api/user" />
 						</td>
 					</tr>
 					<tr>
-						<th scope="row">
-							<label for="new-provider-token-url"><?php esc_html_e( 'Token URL', 'oauth-login' ); ?></label>
-						</th>
+						<th scope="row"><label><?php esc_html_e( 'Scopes', 'oauth-login' ); ?></label></th>
 						<td>
-							<input type="url" id="new-provider-token-url" name="wp_oauth_login_settings[new_provider][token_url]" class="regular-text" placeholder="https://provider.com/oauth/token">
-						</td>
-					</tr>
-					<tr>
-						<th scope="row">
-							<label for="new-provider-user-info-url"><?php esc_html_e( 'User Info URL', 'oauth-login' ); ?></label>
-						</th>
-						<td>
-							<input type="url" id="new-provider-user-info-url" name="wp_oauth_login_settings[new_provider][user_info_url]" class="regular-text" placeholder="https://provider.com/api/user">
-						</td>
-					</tr>
-					<tr>
-						<th scope="row">
-							<label for="new-provider-scopes"><?php esc_html_e( 'Scopes', 'oauth-login' ); ?></label>
-						</th>
-						<td>
-							<input type="text" id="new-provider-scopes" name="wp_oauth_login_settings[new_provider][scopes]" class="regular-text" placeholder="email,profile">
+							<input type="text" name="<?php echo esc_attr( $prefix ); ?>[scopes]" value="<?php echo esc_attr( $config['scopes'] ?? '' ); ?>" class="regular-text" placeholder="email,profile" />
 							<p class="description"><?php esc_html_e( 'Comma-separated list of OAuth scopes.', 'oauth-login' ); ?></p>
 						</td>
 					</tr>
 					<tr>
-						<th scope="row">
-							<label for="new-provider-client-id"><?php esc_html_e( 'Client ID', 'oauth-login' ); ?></label>
-						</th>
+						<th scope="row"><label><?php esc_html_e( 'Callback URL', 'oauth-login' ); ?></label></th>
 						<td>
-							<input type="text" id="new-provider-client-id" name="wp_oauth_login_settings[new_provider][client_id]" class="regular-text" autocomplete="off">
+							<input type="url" name="<?php echo esc_attr( $prefix ); ?>[callback_url]" value="<?php echo esc_attr( $config['callback_url'] ?? wp_login_url() ); ?>" class="regular-text" />
+							<p class="description"><?php esc_html_e( 'The URL the provider will redirect to after authentication. Default is your login page.', 'oauth-login' ); ?></p>
+						</td>
+					</tr>
+				<?php endif; ?>
+			</table>
+
+			<!-- Button Styling Section -->
+			<h4><?php esc_html_e( 'Button Appearance', 'oauth-login' ); ?></h4>
+			<table class="form-table" role="presentation">
+				<tr>
+					<th scope="row"><label><?php esc_html_e( 'Button Text', 'oauth-login' ); ?></label></th>
+					<td>
+						<input type="text" name="<?php echo esc_attr( $prefix ); ?>[button_text]" value="<?php echo esc_attr( $config['button_text'] ?? '' ); ?>" class="regular-text" placeholder="<?php /* translators: %s: Provider name */ printf( esc_attr__( 'Login with %s', 'oauth-login' ), esc_attr( $name ?: $provider_id ) ); ?>" />
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label><?php esc_html_e( 'Button Icon URL', 'oauth-login' ); ?></label></th>
+					<td>
+						<input type="url" name="<?php echo esc_attr( $prefix ); ?>[button_icon]" value="<?php echo esc_attr( $config['button_icon'] ?? '' ); ?>" class="regular-text" placeholder="https://example.com/icon.png" />
+						<p class="description"><?php esc_html_e( 'URL to a custom icon image. Displayed on the left side of the button.', 'oauth-login' ); ?></p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label><?php esc_html_e( 'Background Color', 'oauth-login' ); ?></label></th>
+					<td>
+						<input type="text" name="<?php echo esc_attr( $prefix ); ?>[button_styles][background_color]" value="<?php echo esc_attr( $styles['background_color'] ); ?>" class="small-text" placeholder="#ffffff" />
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label><?php esc_html_e( 'Text Color', 'oauth-login' ); ?></label></th>
+					<td>
+						<input type="text" name="<?php echo esc_attr( $prefix ); ?>[button_styles][text_color]" value="<?php echo esc_attr( $styles['text_color'] ); ?>" class="small-text" placeholder="#3d4145" />
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label><?php esc_html_e( 'Border Color', 'oauth-login' ); ?></label></th>
+					<td>
+						<input type="text" name="<?php echo esc_attr( $prefix ); ?>[button_styles][border_color]" value="<?php echo esc_attr( $styles['border_color'] ); ?>" class="small-text" placeholder="#ccced0" />
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label><?php esc_html_e( 'Border Width', 'oauth-login' ); ?></label></th>
+					<td>
+						<input type="text" name="<?php echo esc_attr( $prefix ); ?>[button_styles][border_width]" value="<?php echo esc_attr( $styles['border_width'] ); ?>" class="small-text" placeholder="1px" />
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label><?php esc_html_e( 'Border Radius', 'oauth-login' ); ?></label></th>
+					<td>
+						<input type="text" name="<?php echo esc_attr( $prefix ); ?>[button_styles][border_radius]" value="<?php echo esc_attr( $styles['border_radius'] ); ?>" class="small-text" placeholder="4px" />
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label><?php esc_html_e( 'Padding', 'oauth-login' ); ?></label></th>
+					<td>
+						<input type="text" name="<?php echo esc_attr( $prefix ); ?>[button_styles][padding]" value="<?php echo esc_attr( $styles['padding'] ); ?>" class="small-text" placeholder="10px 15px" />
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label><?php esc_html_e( 'Font Size', 'oauth-login' ); ?></label></th>
+					<td>
+						<input type="text" name="<?php echo esc_attr( $prefix ); ?>[button_styles][font_size]" value="<?php echo esc_attr( $styles['font_size'] ); ?>" class="small-text" placeholder="14px" />
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label><?php esc_html_e( 'Hover Background', 'oauth-login' ); ?></label></th>
+					<td>
+						<input type="text" name="<?php echo esc_attr( $prefix ); ?>[button_styles][hover_background_color]" value="<?php echo esc_attr( $styles['hover_background_color'] ); ?>" class="small-text" placeholder="#f7f7f7" />
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label><?php esc_html_e( 'Hover Text Color', 'oauth-login' ); ?></label></th>
+					<td>
+						<input type="text" name="<?php echo esc_attr( $prefix ); ?>[button_styles][hover_text_color]" value="<?php echo esc_attr( $styles['hover_text_color'] ); ?>" class="small-text" placeholder="#3d4145" />
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label><?php esc_html_e( 'Hover Border Color', 'oauth-login' ); ?></label></th>
+					<td>
+						<input type="text" name="<?php echo esc_attr( $prefix ); ?>[button_styles][hover_border_color]" value="<?php echo esc_attr( $styles['hover_border_color'] ); ?>" class="small-text" placeholder="#babcbe" />
+					</td>
+				</tr>
+			</table>
+
+			<?php if ( ! $is_google ) : ?>
+				<!-- Field Mappings Section -->
+				<h4><?php esc_html_e( 'Field Mappings', 'oauth-login' ); ?></h4>
+				<p class="description"><?php esc_html_e( 'Map provider response fields to user data. Use dot notation for nested fields (e.g., "user.email").', 'oauth-login' ); ?></p>
+				<table class="form-table" role="presentation">
+					<tr>
+						<th scope="row"><label><?php esc_html_e( 'Email', 'oauth-login' ); ?></label></th>
+						<td>
+							<input type="text" name="<?php echo esc_attr( $prefix ); ?>[field_mappings][email]" value="<?php echo esc_attr( $mappings['email'] ); ?>" class="regular-text" placeholder="email" />
 						</td>
 					</tr>
 					<tr>
-						<th scope="row">
-							<label for="new-provider-client-secret"><?php esc_html_e( 'Client Secret', 'oauth-login' ); ?></label>
-						</th>
+						<th scope="row"><label><?php esc_html_e( 'First Name', 'oauth-login' ); ?></label></th>
 						<td>
-							<input type="password" id="new-provider-client-secret" name="wp_oauth_login_settings[new_provider][client_secret]" class="regular-text" autocomplete="off">
+							<input type="text" name="<?php echo esc_attr( $prefix ); ?>[field_mappings][first_name]" value="<?php echo esc_attr( $mappings['first_name'] ); ?>" class="regular-text" placeholder="first_name" />
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label><?php esc_html_e( 'Last Name', 'oauth-login' ); ?></label></th>
+						<td>
+							<input type="text" name="<?php echo esc_attr( $prefix ); ?>[field_mappings][last_name]" value="<?php echo esc_attr( $mappings['last_name'] ); ?>" class="regular-text" placeholder="last_name" />
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label><?php esc_html_e( 'Display Name', 'oauth-login' ); ?></label></th>
+						<td>
+							<input type="text" name="<?php echo esc_attr( $prefix ); ?>[field_mappings][display_name]" value="<?php echo esc_attr( $mappings['display_name'] ); ?>" class="regular-text" placeholder="name" />
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label><?php esc_html_e( 'Avatar', 'oauth-login' ); ?></label></th>
+						<td>
+							<input type="text" name="<?php echo esc_attr( $prefix ); ?>[field_mappings][avatar]" value="<?php echo esc_attr( $mappings['avatar'] ); ?>" class="regular-text" placeholder="avatar_url" />
 						</td>
 					</tr>
 				</table>
-			</details>
+			<?php endif; ?>
+
+			<p>
+				<?php if ( ! $is_new && ! $is_google ) : ?>
+					<button type="button" class="button button-primary oauth-test-provider" data-provider="<?php echo esc_attr( $provider_id ); ?>">
+						<?php esc_html_e( 'Test Configuration & Map Fields', 'oauth-login' ); ?>
+					</button>
+				<?php endif; ?>
+				<button type="button" class="button oauth-close-panel" data-provider="<?php echo esc_attr( $provider_id ); ?>">
+					<?php esc_html_e( 'Close', 'oauth-login' ); ?>
+				</button>
+			</p>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Render the new custom provider form.
+	 *
+	 * @return void
+	 */
+	private function render_new_custom_provider_form(): void {
+		?>
+		<div class="oauth-provider-edit-panel" id="oauth-panel-new-custom" style="margin-top:15px; padding:15px; border:1px solid #ccd0d4; background:#f9f9f9;">
+			<h3><?php esc_html_e( 'Add Custom OAuth Provider', 'oauth-login' ); ?></h3>
+			<table class="form-table" role="presentation">
+				<tr>
+					<th scope="row"><label><?php esc_html_e( 'Provider Slug', 'oauth-login' ); ?></label></th>
+					<td>
+						<input type="text" name="wp_oauth_login_settings[new_provider][slug]" class="regular-text" pattern="[a-z0-9_-]+" placeholder="my-provider" />
+						<p class="description"><?php esc_html_e( 'Unique identifier (lowercase, no spaces). Example: github, facebook', 'oauth-login' ); ?></p>
+					</td>
+				</tr>
+			</table>
+			<?php
+			$this->render_provider_edit_panel(
+				'new-custom',
+				[
+					'type'        => 'custom',
+					'name'        => '',
+					'client_id'   => '',
+					'client_secret' => '',
+					'enabled'     => true,
+				],
+				true
+			);
+			?>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Get all provider configurations from settings.
+	 *
+	 * @return array All provider configs keyed by provider ID.
+	 */
+	private function get_all_provider_configs(): array {
+		return $this->provider_settings['providers'] ?? [];
+	}
+
+	/**
+	 * Check if a provider config exists.
+	 *
+	 * @param string $provider_id Provider ID.
+	 *
+	 * @return bool
+	 */
+	private function has_provider_config( string $provider_id ): bool {
+		return isset( $this->provider_settings['providers'][ $provider_id ] );
+	}
+
+	/**
+	 * Get default Google provider configuration.
+	 *
+	 * @return array Default Google config.
+	 */
+	private function get_default_google_config(): array {
+		return [
+			'type'          => 'google',
+			'name'          => 'Google',
+			'client_id'     => '',
+			'client_secret' => '',
+			'enabled'       => true,
+			'button_text'   => '',
+			'button_icon'   => '',
+			'button_styles' => [
+				'background_color'       => '#ffffff',
+				'text_color'             => '#3d4145',
+				'border_color'           => '#ccced0',
+				'border_width'           => '1px',
+				'border_radius'          => '4px',
+				'padding'                => '10px 15px',
+				'font_size'              => '14px',
+				'hover_background_color' => '#f7f7f7',
+				'hover_text_color'       => '#3d4145',
+				'hover_border_color'     => '#babcbe',
+			],
+		];
+	}
+
+	/**
+	 * Render the admin JavaScript for provider management.
+	 *
+	 * @return void
+	 */
+	private function render_provider_admin_script(): void {
+		// phpcs:disable
+		?>
+		<script type="text/javascript">
+		jQuery(document).ready(function($) {
+			// Toggle edit panels.
+			$('.oauth-edit-provider').on('click', function() {
+				var providerId = $(this).data('provider');
+				$('#oauth-panel-' + providerId).slideToggle();
+			});
+
+			$('.oauth-close-panel').on('click', function() {
+				$(this).closest('.oauth-provider-edit-panel').slideUp();
+			});
+
+			// Add Google provider.
+			$('#oauth-add-google-provider').on('click', function() {
+				$('#oauth-new-google-panel').slideToggle();
+			});
+
+			// Add custom provider.
+			$('#oauth-add-custom-provider').on('click', function() {
+				$('#oauth-new-custom-panel').slideToggle();
+			});
+
+			// Drag and drop ordering.
+			if (typeof $.fn.sortable !== 'undefined') {
+				$('#oauth-providers-list').sortable({
+					handle: '.oauth-drag-handle',
+					update: function() {
+						var order = [];
+						$('#oauth-providers-list tr.oauth-provider-row').each(function() {
+							order.push($(this).data('provider-id'));
+						});
+						$('#oauth-provider-order').val(order.join(','));
+					}
+				});
+			}
+
+			// Test provider configuration.
+			$('.oauth-test-provider').on('click', function() {
+				var providerId = $(this).data('provider');
+				var $btn = $(this);
+				$btn.prop('disabled', true).text('<?php echo esc_js( __( 'Initiating...', 'oauth-login' ) ); ?>');
+
+				$.post(ajaxurl, {
+					action: 'oauth_test_login_init',
+					nonce: '<?php echo esc_js( wp_create_nonce( 'oauth_test_login' ) ); ?>',
+					provider_id: providerId
+				}, function(response) {
+					$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Test Configuration & Map Fields', 'oauth-login' ) ); ?>');
+					if (response.success && response.data.auth_url) {
+						window.open(response.data.auth_url, 'oauth_test_' + providerId, 'width=600,height=700');
+					} else {
+						alert(response.data ? response.data.message : '<?php echo esc_js( __( 'Failed to initiate test login.', 'oauth-login' ) ); ?>');
+					}
+				}).fail(function() {
+					$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Test Configuration & Map Fields', 'oauth-login' ) ); ?>');
+					alert('<?php echo esc_js( __( 'Request failed. Please try again.', 'oauth-login' ) ); ?>');
+				});
+			});
+
+			// Listen for field mapping results from test login popup.
+			window.addEventListener('message', function(event) {
+				if (!event.data || event.data.type !== 'oauth_test_mappings') return;
+
+				var providerId = event.data.provider_id;
+				var mappings = event.data.mappings;
+				var prefix = 'wp_oauth_login_settings[providers][' + providerId + '][field_mappings]';
+
+				// Update the field mapping inputs in the edit panel.
+				$.each(mappings, function(field, path) {
+					$('input[name="' + prefix + '[' + field + ']"]').val(path);
+				});
+
+				// Flash the panel to indicate update.
+				var $panel = $('#oauth-panel-' + providerId);
+				$panel.css('background-color', '#e7f5e7');
+				setTimeout(function() { $panel.css('background-color', '#f9f9f9'); }, 1500);
+			});
+		});
+		</script>
+		<?php
+		// phpcs:enable
 	}
 
 	/**
@@ -596,32 +854,33 @@ class Settings implements ModuleInterface {
 	 * @return array Sanitized input.
 	 */
 	public function sanitize_settings( array $input ): array {
-		$sanitized = [];
+		// Save legacy settings if present in POST data.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified by settings API.
+		if ( isset( $_POST['wp_google_login_settings'] ) && is_array( $_POST['wp_google_login_settings'] ) ) {
+			$legacy = get_option( 'wp_google_login_settings', [] );
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing
+			$posted_legacy = array_map( 'sanitize_text_field', $_POST['wp_google_login_settings'] );
+			$legacy        = array_merge( $legacy, $posted_legacy );
+			update_option( 'wp_google_login_settings', $legacy );
+		}
 
-		// Sanitize built-in provider settings.
+		$sanitized = [
+			'version'        => '2.1.0',
+			'providers'      => [],
+			'provider_order' => [],
+		];
+
+		// Sanitize provider settings.
 		if ( isset( $input['providers'] ) && is_array( $input['providers'] ) ) {
 			foreach ( $input['providers'] as $provider_id => $settings ) {
 				$provider_id = sanitize_key( $provider_id );
 
-				$sanitized['providers'][ $provider_id ] = [
-					'enabled'       => ! empty( $settings['enabled'] ),
-					'client_id'     => sanitize_text_field( $settings['client_id'] ?? '' ),
-					'client_secret' => sanitize_text_field( $settings['client_secret'] ?? '' ),
-				];
-			}
-		}
-
-		// Sanitize custom providers.
-		if ( isset( $input['custom_providers'] ) && is_array( $input['custom_providers'] ) ) {
-			foreach ( $input['custom_providers'] as $slug => $provider ) {
-				$slug = sanitize_key( $slug );
-
 				// Skip if marked for deletion.
-				if ( ! empty( $provider['delete'] ) ) {
+				if ( ! empty( $settings['delete'] ) ) {
 					continue;
 				}
 
-				$sanitized['custom_providers'][ $slug ] = $this->sanitize_custom_provider( $provider );
+				$sanitized['providers'][ $provider_id ] = $this->sanitize_provider( $settings );
 			}
 		}
 
@@ -629,8 +888,82 @@ class Settings implements ModuleInterface {
 		if ( isset( $input['new_provider'] ) && ! empty( $input['new_provider']['slug'] ) ) {
 			$new_slug = sanitize_key( $input['new_provider']['slug'] );
 
-			if ( ! empty( $new_slug ) ) {
-				$sanitized['custom_providers'][ $new_slug ] = $this->sanitize_custom_provider( $input['new_provider'] );
+			if ( ! empty( $new_slug ) && ! isset( $sanitized['providers'][ $new_slug ] ) ) {
+				$sanitized['providers'][ $new_slug ] = $this->sanitize_provider( $input['new_provider'] );
+			}
+		}
+
+		// Sanitize provider order.
+		if ( ! empty( $input['provider_order'] ) ) {
+			$order = is_array( $input['provider_order'] )
+				? $input['provider_order']
+				: array_filter( array_map( 'trim', explode( ',', $input['provider_order'] ) ) );
+
+			$sanitized['provider_order'] = array_map( 'sanitize_key', $order );
+		} else {
+			$sanitized['provider_order'] = array_keys( $sanitized['providers'] );
+		}
+
+		return $sanitized;
+	}
+
+	/**
+	 * Sanitize a single provider's settings.
+	 *
+	 * @param array $provider Raw provider data.
+	 *
+	 * @return array Sanitized provider data.
+	 */
+	private function sanitize_provider( array $provider ): array {
+		$sanitized = [
+			'type'           => sanitize_key( $provider['type'] ?? 'custom' ),
+			'name'           => sanitize_text_field( $provider['name'] ?? '' ),
+			'enabled'        => ! empty( $provider['enabled'] ),
+			'client_id'      => sanitize_text_field( $provider['client_id'] ?? '' ),
+			'client_secret'  => sanitize_text_field( $provider['client_secret'] ?? '' ),
+			'button_text'    => sanitize_text_field( $provider['button_text'] ?? '' ),
+			'button_icon'    => esc_url_raw( $provider['button_icon'] ?? '' ),
+			'button_styles'  => $this->sanitize_button_styles( $provider['button_styles'] ?? [] ),
+		];
+
+		// Custom provider fields.
+		if ( 'google' !== ( $provider['type'] ?? 'custom' ) ) {
+			$sanitized['authorize_url']  = esc_url_raw( $provider['authorize_url'] ?? '' );
+			$sanitized['token_url']      = esc_url_raw( $provider['token_url'] ?? '' );
+			$sanitized['user_info_url']  = esc_url_raw( $provider['user_info_url'] ?? '' );
+			$sanitized['scopes']         = sanitize_text_field( $provider['scopes'] ?? '' );
+			$sanitized['callback_url']   = esc_url_raw( $provider['callback_url'] ?? '' );
+			$sanitized['field_mappings'] = $this->sanitize_field_mappings( $provider['field_mappings'] ?? [] );
+		}
+
+		return $sanitized;
+	}
+
+	/**
+	 * Sanitize button styles.
+	 *
+	 * @param array $styles Raw styles.
+	 *
+	 * @return array Sanitized styles.
+	 */
+	private function sanitize_button_styles( array $styles ): array {
+		$allowed_keys = [
+			'background_color',
+			'text_color',
+			'border_color',
+			'border_width',
+			'border_radius',
+			'padding',
+			'font_size',
+			'hover_background_color',
+			'hover_text_color',
+			'hover_border_color',
+		];
+
+		$sanitized = [];
+		foreach ( $allowed_keys as $key ) {
+			if ( isset( $styles[ $key ] ) ) {
+				$sanitized[ $key ] = sanitize_text_field( $styles[ $key ] );
 			}
 		}
 
@@ -638,22 +971,26 @@ class Settings implements ModuleInterface {
 	}
 
 	/**
-	 * Sanitize a single custom provider's settings.
+	 * Sanitize field mappings.
 	 *
-	 * @param array $provider Raw provider data.
+	 * @param array $mappings Raw mappings.
 	 *
-	 * @return array Sanitized provider data.
+	 * @return array Sanitized mappings.
 	 */
-	private function sanitize_custom_provider( array $provider ): array {
-		return [
-			'name'          => sanitize_text_field( $provider['name'] ?? '' ),
-			'authorize_url' => esc_url_raw( $provider['authorize_url'] ?? '' ),
-			'token_url'     => esc_url_raw( $provider['token_url'] ?? '' ),
-			'user_info_url' => esc_url_raw( $provider['user_info_url'] ?? '' ),
-			'scopes'        => sanitize_text_field( $provider['scopes'] ?? '' ),
-			'client_id'     => sanitize_text_field( $provider['client_id'] ?? '' ),
-			'client_secret' => sanitize_text_field( $provider['client_secret'] ?? '' ),
-		];
+	private function sanitize_field_mappings( array $mappings ): array {
+		$allowed_keys = [ 'email', 'first_name', 'last_name', 'display_name', 'avatar' ];
+		$sanitized    = [];
+
+		foreach ( $allowed_keys as $key ) {
+			if ( isset( $mappings[ $key ] ) ) {
+				// Allow dot notation for nested fields, sanitize each part.
+				$parts = explode( '.', $mappings[ $key ] );
+				$parts = array_map( 'sanitize_text_field', $parts );
+				$sanitized[ $key ] = implode( '.', $parts );
+			}
+		}
+
+		return $sanitized;
 	}
 
 	/**
@@ -834,10 +1171,14 @@ class Settings implements ModuleInterface {
 		<h1><?php esc_html_e( 'OAuth Login Settings', 'oauth-login' ); ?></h1>
 		<form action='options.php' method='post'>
 			<?php
-			// Include both settings groups for saving.
 			settings_fields( 'wp_oauth_login' );
-			settings_fields( 'wp_google_login' );
 			do_settings_sections( 'oauth-login' );
+
+			// Include hidden fields for legacy settings so they are submitted with the form.
+			?>
+			<input type="hidden" name="wp_google_login_settings[client_id]" value="<?php echo esc_attr( $this->client_id ); ?>" />
+			<input type="hidden" name="wp_google_login_settings[client_secret]" value="<?php echo esc_attr( $this->client_secret ); ?>" />
+			<?php
 			submit_button();
 			?>
 		</form>

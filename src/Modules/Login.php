@@ -22,6 +22,8 @@ use Exception;
 use Circularlizard\OAuthLogin\Utils\Helper;
 use Circularlizard\OAuthLogin\Utils\GoogleClient;
 use Circularlizard\OAuthLogin\Utils\Authenticator;
+use Circularlizard\OAuthLogin\Utils\LoginButtonRenderer;
+use Circularlizard\OAuthLogin\Utils\ProviderRegistry;
 use Circularlizard\OAuthLogin\Interfaces\Module as ModuleInterface;
 use function Circularlizard\OAuthLogin\plugin;
 
@@ -46,6 +48,20 @@ class Login implements ModuleInterface {
 	private $authenticator;
 
 	/**
+	 * Login button renderer.
+	 *
+	 * @var LoginButtonRenderer|null
+	 */
+	private $button_renderer;
+
+	/**
+	 * Provider registry.
+	 *
+	 * @var ProviderRegistry|null
+	 */
+	private $provider_registry;
+
+	/**
 	 * Flag for determining whether the user has been authenticated
 	 * from plugin.
 	 *
@@ -62,6 +78,28 @@ class Login implements ModuleInterface {
 	public function __construct( GoogleClient $client, Authenticator $authenticator ) {
 		$this->gh_client     = $client;
 		$this->authenticator = $authenticator;
+	}
+
+	/**
+	 * Set the login button renderer.
+	 *
+	 * @param LoginButtonRenderer $renderer Button renderer.
+	 *
+	 * @return void
+	 */
+	public function set_button_renderer( LoginButtonRenderer $renderer ): void {
+		$this->button_renderer = $renderer;
+	}
+
+	/**
+	 * Set the provider registry.
+	 *
+	 * @param ProviderRegistry $registry Provider registry.
+	 *
+	 * @return void
+	 */
+	public function set_provider_registry( ProviderRegistry $registry ): void {
+		$this->provider_registry = $registry;
 	}
 
 	/**
@@ -102,6 +140,12 @@ class Login implements ModuleInterface {
 	 * @return void
 	 */
 	public function login_button(): void {
+		if ( null !== $this->button_renderer ) {
+			$this->button_renderer->render();
+			return;
+		}
+
+		// Fallback to legacy Google-only button if renderer not available.
 		$template  = trailingslashit( plugin()->template_dir ) . 'google-login-button.php';
 		$login_url = plugin()->container()->get( 'gh_client' )->authorization_url();
 
@@ -135,14 +179,36 @@ class Login implements ModuleInterface {
 		$state         = Helper::filter_input( INPUT_GET, 'state', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 		$decoded_state = $state ? (array) ( json_decode( base64_decode( $state ) ) ) : null;    // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
 
-		if ( ! is_array( $decoded_state ) || empty( $decoded_state['provider'] ) || 'google' !== $decoded_state['provider'] ) {
+		if ( ! is_array( $decoded_state ) || empty( $decoded_state['provider'] ) ) {
 			return $user;
 		}
 
-		if ( empty( $decoded_state['nonce'] ) || ! wp_verify_nonce( $decoded_state['nonce'], 'login_with_google' ) ) {
+		$provider_id = $decoded_state['provider'];
+
+		// Verify nonce - support both legacy and new nonce formats.
+		$nonce_action = 'oauth_login_' . $provider_id;
+		if ( empty( $decoded_state['nonce'] ) || ( ! wp_verify_nonce( $decoded_state['nonce'], $nonce_action ) && ! wp_verify_nonce( $decoded_state['nonce'], 'login_with_google' ) ) ) {
 			return $user;
 		}
 
+		// For Google provider, use the legacy GoogleClient flow.
+		if ( 'google' === $provider_id ) {
+			return $this->authenticate_google( $code, $decoded_state );
+		}
+
+		// For custom providers, use the provider registry.
+		return $this->authenticate_custom( $code, $provider_id, $decoded_state );
+	}
+
+	/**
+	 * Authenticate via Google OAuth (legacy flow).
+	 *
+	 * @param string $code          Authorization code.
+	 * @param array  $decoded_state Decoded state data.
+	 *
+	 * @return WP_User|WP_Error
+	 */
+	private function authenticate_google( string $code, array $decoded_state ) {
 		try {
 			$this->gh_client->set_access_token( $code );
 			$user = $this->gh_client->user();
@@ -171,6 +237,96 @@ class Login implements ModuleInterface {
 	}
 
 	/**
+	 * Authenticate via a custom OAuth provider.
+	 *
+	 * @param string $code          Authorization code.
+	 * @param string $provider_id   Provider ID.
+	 * @param array  $decoded_state Decoded state data.
+	 *
+	 * @return WP_User|WP_Error
+	 */
+	private function authenticate_custom( string $code, string $provider_id, array $decoded_state ) {
+		if ( null === $this->provider_registry ) {
+			return new WP_Error( 'oauth_login_failed', __( 'Provider registry not available.', 'oauth-login' ) );
+		}
+
+		$provider = $this->provider_registry->get( $provider_id );
+
+		if ( null === $provider ) {
+			return new WP_Error( 'oauth_login_failed', __( 'Unknown OAuth provider.', 'oauth-login' ) );
+		}
+
+		try {
+			// Exchange code for access token.
+			$token_response = wp_remote_post(
+				$provider->get_token_url(),
+				[
+					'headers' => [ 'Accept' => 'application/json' ],
+					'body'    => [
+						'client_id'     => $provider->get_client_id(),
+						'client_secret' => $provider->get_client_secret(),
+						'redirect_uri'  => $provider->get_callback_url(),
+						'code'          => $code,
+						'grant_type'    => 'authorization_code',
+					],
+				]
+			);
+
+			if ( 200 !== wp_remote_retrieve_response_code( $token_response ) ) {
+				throw new Exception( __( 'Could not retrieve the access token, please try again.', 'oauth-login' ) );
+			}
+
+			$token_data   = json_decode( wp_remote_retrieve_body( $token_response ) );
+			$access_token = $token_data->access_token ?? '';
+
+			if ( empty( $access_token ) ) {
+				throw new Exception( __( 'Access token not found in provider response.', 'oauth-login' ) );
+			}
+
+			// Fetch user info.
+			$user_response = wp_remote_get( // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.wp_remote_get_wp_remote_get
+				$provider->get_user_info_url(),
+				[
+					'headers' => [
+						'Accept'        => 'application/json',
+						'Authorization' => 'Bearer ' . $access_token,
+					],
+				]
+			);
+
+			if ( 200 !== wp_remote_retrieve_response_code( $user_response ) ) {
+				throw new Exception( __( 'Could not retrieve user information from provider.', 'oauth-login' ) );
+			}
+
+			$raw_user = json_decode( wp_remote_retrieve_body( $user_response ) );
+			$user     = $provider->parse_user_response( $raw_user );
+			$user     = $this->authenticator->authenticate( $user );
+
+			if ( $user instanceof WP_User ) {
+				$this->authenticated = true;
+
+				/**
+				 * Fires once the user has been authenticated via OAuth.
+				 *
+				 * @since 2.1.0
+				 *
+				 * @param WP_User $user        WP User object.
+				 * @param string  $provider_id Provider ID.
+				 */
+				do_action( 'oauth.user_authenticated', $user, $provider_id );
+				do_action( 'rtcamp.google_user_authenticated', $user );
+
+				return $user;
+			}
+
+			throw new Exception( __( 'Could not authenticate the user, please try again.', 'oauth-login' ) );
+
+		} catch ( Throwable $e ) {
+			return new WP_Error( 'oauth_login_failed', $e->getMessage() );
+		}
+	}
+
+	/**
 	 * Add extra meta information about user.
 	 *
 	 * @param int $uid  User ID.
@@ -178,8 +334,12 @@ class Login implements ModuleInterface {
 	 * @return void
 	 */
 	public function user_meta( int $uid ) {
+		$state         = Helper::filter_input( INPUT_GET, 'state', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		$decoded_state = $state ? (array) ( json_decode( base64_decode( $state ) ) ) : null; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+		$provider_id   = $decoded_state['provider'] ?? 'google';
+
 		add_user_meta( $uid, 'oauth_user', 1, true );
-		add_user_meta( $uid, 'oauth_provider', 'google', true );
+		add_user_meta( $uid, 'oauth_provider', $provider_id, true );
 	}
 
 	/**
@@ -232,7 +392,7 @@ class Login implements ModuleInterface {
 		$state = base64_decode( $state );
 		$state = $state ? json_decode( $state ) : null;
 
-		if ( ( $state instanceof stdClass ) && ! empty( $state->provider ) && 'google' === $state->provider && ! empty( $state->redirect_to ) ) {
+		if ( ( $state instanceof stdClass ) && ! empty( $state->provider ) && ! empty( $state->redirect_to ) ) {
 			wp_safe_redirect( $state->redirect_to, 302, 'OAuth Login' );
 			exit;
 		}
