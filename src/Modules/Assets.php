@@ -64,7 +64,7 @@ class Assets implements ModuleInterface {
 	 * @return void
 	 */
 	public function register_login_styles(): void {
-		$this->register_style( self::LOGIN_BUTTON_STYLE_HANDLE, 'build/css/button/style-2.1.0.css' );
+		$this->register_style( self::LOGIN_BUTTON_STYLE_HANDLE, 'build/css/button/style-2.1.1.css' );
 	}
 
 	/**
