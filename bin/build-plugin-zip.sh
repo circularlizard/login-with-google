@@ -7,6 +7,15 @@ set -e
 SCRIPT_DIR=$(dirname "$0")
 cd "$SCRIPT_DIR/.." || exit 1
 
+# Validate version consistency before building
+echo "Validating version consistency..."
+if ! ./bin/validate-version.sh; then
+    echo ""
+    echo "❌ Build aborted: Version mismatch detected"
+    exit 1
+fi
+echo ""
+
 # Define environment variables
 PLUGIN_SLUG="oauth-login"
 
