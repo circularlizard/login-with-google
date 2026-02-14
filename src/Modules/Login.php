@@ -121,7 +121,7 @@ class Login implements ModuleInterface {
 		/**
 		 * Actions.
 		 */
-		add_action( 'login_form', [ $this, 'login_button' ] );
+		add_action( 'login_footer', [ $this, 'login_button' ] );
 		// Priority is 20 because of issue: https://core.trac.wordpress.org/ticket/46748.
 		add_action( 'authenticate', [ $this, 'authenticate' ], 20 );
 		add_action( 'rtcamp.google_register_user', [ $this->authenticator, 'register' ] );
@@ -141,21 +141,37 @@ class Login implements ModuleInterface {
 	 * @return void
 	 */
 	public function login_button(): void {
+		echo '<div id="oauth-login-buttons-wrapper">';
+
 		if ( null !== $this->button_renderer ) {
 			$this->button_renderer->render();
-			return;
+		} else {
+			// Fallback to legacy Google-only button if renderer not available.
+			$template  = trailingslashit( plugin()->template_dir ) . 'google-login-button.php';
+			$login_url = plugin()->container()->get( 'gh_client' )->authorization_url();
+
+			Helper::render_template(
+				$template,
+				[
+					'login_url' => $login_url,
+				]
+			);
 		}
 
-		// Fallback to legacy Google-only button if renderer not available.
-		$template  = trailingslashit( plugin()->template_dir ) . 'google-login-button.php';
-		$login_url = plugin()->container()->get( 'gh_client' )->authorization_url();
+		echo '</div>';
 
-		Helper::render_template(
-			$template,
-			[
-				'login_url' => $login_url,
-			]
-		);
+		// Move the buttons into the #login container, after the login form.
+		?>
+		<script>
+		(function() {
+			var wrapper = document.getElementById('oauth-login-buttons-wrapper');
+			var loginDiv = document.getElementById('login');
+			if (wrapper && loginDiv) {
+				loginDiv.appendChild(wrapper);
+			}
+		})();
+		</script>
+		<?php
 	}
 
 	/**
