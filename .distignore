@@ -5,6 +5,8 @@
 .idea
 .distignore
 .nvmrc
+.windsurf/
+.DS_Store
 .phpunit.result.cache
 phpunit.xml.dist
 phpcs.xml
@@ -16,3 +18,5 @@ assets/src
 node_modules
 release
 bin
+*.md
+!readme.txt
