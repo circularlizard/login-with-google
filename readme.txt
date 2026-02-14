@@ -3,9 +3,9 @@ Contributors: Circularlizard
 Donate link: https://github.com/circularlizard
 Tags: OAuth, Google login, sign in, sso, oauth2, authentication, sign-in, single sign-on, log in
 Requires at least: 5.5
-Tested up to: 6.7.2
+Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 2.1.0
+Stable tag: 2.1.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -140,6 +140,9 @@ Code snippets to extend and customize the plugin can be found [here](https://git
 
 == Changelog ==
 
+= 2.1.1 =
+* Update: Tested with WordPress 6.9
+
 = 2.1.0 =
 * Feature: Multi-provider OAuth 2.0 architecture - support for Google and custom OAuth providers
 * Feature: Provider management UI with test mode for configuration validation
@@ -244,6 +247,9 @@ Chore: Documentation update.
 * Maintenance release: Updated minimum requirements.
 
 == Upgrade Notice ==
+
+= 2.1.1 =
+Tested with WordPress 6.9
 
 = 2.1.0 =
 Major update: Multi-provider OAuth 2.0 architecture with enhanced security features. Adds support for custom OAuth providers, provider management UI, test mode, and comprehensive security hardening including HMAC-signed state and encrypted secrets.
