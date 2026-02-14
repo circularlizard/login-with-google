@@ -22,53 +22,73 @@
 
 ## Overview
 
-OAuth Login provides a seamless experience for users to login to WordPress
-sites using their OAuth 2.0 provider accounts. Currently supports Google with an extensible
-architecture for adding additional providers.
+OAuth Login provides a seamless experience for users to login to WordPress sites using their OAuth 2.0 provider accounts. The plugin includes built-in support for Google OAuth 2.0 with an extensible architecture for adding custom OAuth providers. Features include a provider management UI, test mode for configuration validation, customizable login buttons, and comprehensive security hardening.
 
 ## Features
 
-- **Google OAuth 2.0** - Login with Google accounts
-- **One Tap Login** - Google's streamlined one-tap authentication
-- **Extensible Provider System** - Add custom OAuth providers via hooks
-- **Shortcode & Block** - Embed login buttons anywhere
+- **Multi-Provider OAuth 2.0** - Login with Google and custom OAuth providers
+- **Google One Tap Login** - Google's streamlined one-tap authentication
+- **Extensible Provider System** - Add custom OAuth providers via the `oauth.register_providers` action
+- **Provider Configuration UI** - Admin panel for managing provider credentials and settings
+- **Test Mode** - Test OAuth flows before going live
+- **Customizable Login Button** - Style and position the login button via admin settings
+- **Shortcode & Block** - Embed login buttons anywhere on your site
 - **Whitelisted Domains** - Restrict registration to specific email domains
-- **WP-CLI Support** - Configure via constants or wp-config.php
+- **WP-CLI Support** - Configure via constants in wp-config.php
+- **Security Hardening** - HMAC-signed state, encrypted secrets, SSRF protection, and more
 
 ## Installation
 
 1. Clone this repository.
 2. Run `composer install --no-dev` inside the cloned directory.
-3. Use `nvm` to install the recommended node version.
+3. Use `nvm` to install the recommended node version (see `.nvmrc`).
 4. Use `npm i` to install the dev dependencies.
-5. Run `npm run production` inside the cloned directory.
+5. Run `npm run production` inside the cloned directory to build assets.
 6. Upload the directory to the `wp-content/plugins` directory.
 7. Activate the plugin from the WordPress dashboard.
+
+### Building and Versioning
+
+The plugin uses semantic versioning (MAJOR.MINOR.PATCH) with automated version synchronization:
+
+- **Primary source:** Version is defined in `oauth-login.php` header (`Version: X.Y.Z`)
+- **Dependent files:** `readme.txt`, `webpack.mix.js`, and `src/Modules/Assets.php` are auto-synced
+- **Build process:** `npm run production` outputs versioned CSS (`style-X.Y.Z.css`)
+- **Release:** `composer run build-plugin-zip` validates versions and creates `oauth-login-X.Y.Z.zip`
+
+See `.windsurf/rules/versioning.md` for detailed version management rules.
 
 ## Browser support
 [These browsers are supported](https://developers.google.com/identity/gsi/web/guides/supported-browsers). Note, for example, that One Tap Login is not supported on Edge in iOS.
 
 ## Usage Instructions
 
-1. You will need to register a new application at https://console.cloud.google.com/apis/dashboard
+### Google OAuth Setup
 
-2. `Authorization callback URL` should be like `https://yourdomain.com/wp-login.php` and the `Authorized JavaScript origins` should be like `https://yourdomain.com` where
-`https://yourdomain.com` will be replaced by your site URL.
+1. Register a new application at https://console.cloud.google.com/apis/dashboard
 
-3. Once you create the app, you will receive the `Client ID` and `Client Secret`, add these credentials
-in `Settings > OAuth Login` settings page in their respective fields.
+2. Configure the OAuth consent screen and create OAuth 2.0 credentials (Web application type)
 
-4. `Create new user` enables new user registration irrespective of `Membership` settings in
-   `Settings > General`; as sometimes enabling user registration can lead to lots of spam users.
-   Plugin will take this setting as first priority and membership setting as second priority, so if
-   any one of them is enabled, new users will be registered by this plugin after successful authorization.
+3. Set the following in your Google Cloud Console:
+   - **Authorization callback URL:** `https://yourdomain.com/wp-login.php`
+   - **Authorized JavaScript origins:** `https://yourdomain.com`
 
-5. `Whitelisted Domains` allows users from specific domains (domain in email) to get registered on site.
-This will prevent unwanted registration on website.
-**For Example:** If you want users only from your organization (`myorg.com`) to get registered on the
-website, you enter `myorg.com` in whitelisted domains. Users with Google
-email like `abc@myorg.com` will be able to register on website. Contrary to this, users with emails like
-`something@gmail.com` would not be able to register here.
+4. In WordPress admin, navigate to `Settings > OAuth Login` and add your provider:
+   - Select "Google" as the provider type
+   - Enter your `Client ID` and `Client Secret`
+   - Optionally enable Test Mode to validate configuration before going live
+   - Click "Test Config" to verify credentials work correctly
+
+### General Settings
+
+5. **Create new user** - Enables new user registration irrespective of `Membership` settings in `Settings > General`. The plugin prioritizes this setting over the WordPress membership setting, so if either is enabled, new users will be registered after successful authorization.
+
+6. **Whitelisted Domains** - Restrict registration to specific email domains. For example, to allow only users from your organization (`myorg.com`), enter `myorg.com` in whitelisted domains. Users with emails like `abc@myorg.com` will be able to register, while `something@gmail.com` will not.
+
+7. **Button Customization** - Customize the appearance and position of the login button:
+   - Choose button text, size, and theme
+   - Customize colors and styling
+   - Select where the button appears (login form, footer, etc.)
 
 ### Plugin Constants
 
@@ -133,6 +153,17 @@ You can add the Google login button to any page/post using shortcode: `google_lo
 | force_display  | Whether to display button when user is already logged in      | yes/no | no                 |
 | redirect_to    | URL where user should be redirected post login                | URL    | `wp-admin`         |
 
+## Security Features
+
+The plugin includes comprehensive security hardening:
+
+- **HMAC-Signed State** - OAuth state parameters are signed with HMAC-SHA256 to prevent state tampering
+- **Encrypted Secrets** - Provider secrets are encrypted at rest using AES-256-CBC
+- **SSRF Protection** - External URLs are validated to prevent server-side request forgery attacks
+- **postMessage Origin Validation** - Cross-origin communication is validated against site URL
+- **Input Sanitization** - Strict validation for colors, dimensions, URLs, and all user inputs
+- **Nonce Isolation** - Legacy nonce usage is restricted to prevent cross-provider attacks
+
 ## Adding Custom Providers
 
 You can register additional OAuth providers using the `oauth.register_providers` action:
@@ -145,6 +176,19 @@ add_action( 'oauth.register_providers', function( $registry ) {
 ```
 
 Your custom provider must implement the `Circularlizard\OAuthLogin\Interfaces\OAuthProvider` interface.
+
+### Provider Configuration
+
+Providers can be configured through the WordPress admin UI at `Settings > OAuth Login`:
+
+1. Click "Add Provider" to add a new OAuth provider
+2. Select the provider type (Google or custom)
+3. Enter the Client ID and Client Secret
+4. Configure optional settings (whitelisted domains, user creation, etc.)
+5. Use "Test Config" to validate the configuration before saving
+6. Save or Save & Close to apply changes
+
+The admin UI provides real-time validation and test capabilities for each provider configuration.
 
 ## Contribute
 - For contributing to this plugin, please refer to [CONTRIBUTING.md](docs/CONTRIBUTING.md) for more details.
