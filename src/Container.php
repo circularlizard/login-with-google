@@ -141,7 +141,7 @@ class Container implements ContainerInterface {
 
 			// Prefer new provider settings, fall back to legacy settings.
 			$client_id     = ! empty( $google_config['client_id'] ) ? $google_config['client_id'] : ( $settings->client_id ?? '' );
-			$client_secret = ! empty( $google_config['client_secret'] ) ? $google_config['client_secret'] : ( $settings->client_secret ?? '' );
+			$client_secret = ! empty( $google_config['client_secret'] ) ? Settings::decrypt_secret( $google_config['client_secret'] ) : ( $settings->client_secret ?? '' );
 
 			return new GoogleClient(
 				[
@@ -256,15 +256,21 @@ class Container implements ContainerInterface {
 			foreach ( $providers as $provider_id => $config ) {
 				$type = $config['type'] ?? 'custom';
 
+				// Decrypt client_secret before passing to providers.
+				$decrypted_config = $config;
+				if ( ! empty( $decrypted_config['client_secret'] ) ) {
+					$decrypted_config['client_secret'] = Settings::decrypt_secret( $decrypted_config['client_secret'] );
+				}
+
 				if ( 'google' === $type || 'google' === $provider_id ) {
 					$google = new GoogleProvider(
-						$config['client_id'] ?? '',
-						$config['client_secret'] ?? ''
+						$decrypted_config['client_id'] ?? '',
+						$decrypted_config['client_secret'] ?? ''
 					);
 					$registry->register( $google );
 				} else {
 					$custom = new CustomProvider(
-						array_merge( $config, [ 'provider_id' => $provider_id ] )
+						array_merge( $decrypted_config, [ 'provider_id' => $provider_id ] )
 					);
 					$registry->register( $custom );
 				}

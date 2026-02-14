@@ -500,7 +500,7 @@ class Settings implements ModuleInterface {
 				<tr>
 					<th scope="row"><label><?php esc_html_e( 'Client Secret', 'oauth-login' ); ?></label></th>
 					<td>
-						<input type="password" name="<?php echo esc_attr( $prefix ); ?>[client_secret]" value="<?php echo esc_attr( $config['client_secret'] ?? '' ); ?>" class="regular-text" autocomplete="off" />
+						<input type="password" name="<?php echo esc_attr( $prefix ); ?>[client_secret]" value="<?php echo esc_attr( self::decrypt_secret( $config['client_secret'] ?? '' ) ); ?>" class="regular-text" autocomplete="off" />
 					</td>
 				</tr>
 
@@ -823,7 +823,9 @@ class Settings implements ModuleInterface {
 			});
 
 			// Listen for field mapping results from test login popup.
+			var trustedOrigin = <?php echo wp_json_encode( untrailingslashit( site_url() ) ); ?>;
 			window.addEventListener('message', function(event) {
+				if (event.origin !== trustedOrigin) return;
 				if (!event.data || event.data.type !== 'oauth_test_mappings') return;
 
 				var providerId = event.data.provider_id;
@@ -857,10 +859,14 @@ class Settings implements ModuleInterface {
 		// Save legacy settings if present in POST data.
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified by settings API.
 		if ( isset( $_POST['wp_google_login_settings'] ) && is_array( $_POST['wp_google_login_settings'] ) ) {
-			$legacy = get_option( 'wp_google_login_settings', [] );
+			$allowed_legacy_keys = [ 'client_id', 'client_secret', 'registration_enabled', 'one_tap_login', 'one_tap_login_screen', 'whitelisted_domains' ];
+			$legacy              = get_option( 'wp_google_login_settings', [] );
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing
-			$posted_legacy = array_map( 'sanitize_text_field', $_POST['wp_google_login_settings'] );
-			$legacy        = array_merge( $legacy, $posted_legacy );
+			$posted_legacy = array_intersect_key(
+				array_map( 'sanitize_text_field', (array) $_POST['wp_google_login_settings'] ),
+				array_flip( $allowed_legacy_keys )
+			);
+			$legacy = array_merge( $legacy, $posted_legacy );
 			update_option( 'wp_google_login_settings', $legacy );
 		}
 
@@ -920,7 +926,7 @@ class Settings implements ModuleInterface {
 			'name'           => sanitize_text_field( $provider['name'] ?? '' ),
 			'enabled'        => ! empty( $provider['enabled'] ),
 			'client_id'      => sanitize_text_field( $provider['client_id'] ?? '' ),
-			'client_secret'  => sanitize_text_field( $provider['client_secret'] ?? '' ),
+			'client_secret'  => $this->encrypt_secret( sanitize_text_field( $provider['client_secret'] ?? '' ) ),
 			'button_text'    => sanitize_text_field( $provider['button_text'] ?? '' ),
 			'button_icon'    => esc_url_raw( $provider['button_icon'] ?? '' ),
 			'button_styles'  => $this->sanitize_button_styles( $provider['button_styles'] ?? [] ),
@@ -928,9 +934,9 @@ class Settings implements ModuleInterface {
 
 		// Custom provider fields.
 		if ( 'google' !== ( $provider['type'] ?? 'custom' ) ) {
-			$sanitized['authorize_url']  = esc_url_raw( $provider['authorize_url'] ?? '' );
-			$sanitized['token_url']      = esc_url_raw( $provider['token_url'] ?? '' );
-			$sanitized['user_info_url']  = esc_url_raw( $provider['user_info_url'] ?? '' );
+			$sanitized['authorize_url']  = $this->sanitize_external_url( $provider['authorize_url'] ?? '' );
+			$sanitized['token_url']      = $this->sanitize_external_url( $provider['token_url'] ?? '' );
+			$sanitized['user_info_url']  = $this->sanitize_external_url( $provider['user_info_url'] ?? '' );
 			$sanitized['scopes']         = sanitize_text_field( $provider['scopes'] ?? '' );
 			$sanitized['callback_url']   = esc_url_raw( $provider['callback_url'] ?? '' );
 			$sanitized['field_mappings'] = $this->sanitize_field_mappings( $provider['field_mappings'] ?? [] );
@@ -947,27 +953,197 @@ class Settings implements ModuleInterface {
 	 * @return array Sanitized styles.
 	 */
 	private function sanitize_button_styles( array $styles ): array {
-		$allowed_keys = [
+		$color_keys = [
 			'background_color',
 			'text_color',
 			'border_color',
-			'border_width',
-			'border_radius',
-			'padding',
-			'font_size',
 			'hover_background_color',
 			'hover_text_color',
 			'hover_border_color',
 		];
 
+		$dimension_keys = [
+			'border_width',
+			'border_radius',
+			'padding',
+			'font_size',
+		];
+
 		$sanitized = [];
-		foreach ( $allowed_keys as $key ) {
+
+		foreach ( $color_keys as $key ) {
 			if ( isset( $styles[ $key ] ) ) {
-				$sanitized[ $key ] = sanitize_text_field( $styles[ $key ] );
+				$sanitized[ $key ] = $this->sanitize_css_color( $styles[ $key ] );
+			}
+		}
+
+		foreach ( $dimension_keys as $key ) {
+			if ( isset( $styles[ $key ] ) ) {
+				$sanitized[ $key ] = $this->sanitize_css_dimension( $styles[ $key ] );
 			}
 		}
 
 		return $sanitized;
+	}
+
+	/**
+	 * Sanitize a CSS color value.
+	 *
+	 * Allows hex colors (#fff, #ffffff, #ffffffff) and
+	 * rgb/rgba functional notation only.
+	 *
+	 * @param string $value Raw color value.
+	 *
+	 * @return string Sanitized color or empty string.
+	 */
+	private function sanitize_css_color( string $value ): string {
+		$value = trim( $value );
+
+		// Hex colors: #fff, #ffffff, #ffffffff.
+		if ( preg_match( '/^#[0-9a-fA-F]{3,8}$/', $value ) ) {
+			return $value;
+		}
+
+		// rgb()/rgba() with numeric values only.
+		if ( preg_match( '/^rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*(,\s*(0|1|0?\.\d+))?\s*\)$/', $value ) ) {
+			return $value;
+		}
+
+		return '';
+	}
+
+	/**
+	 * Sanitize a CSS dimension value.
+	 *
+	 * Allows values like "4px", "10px 15px", "1.5em", "50%".
+	 *
+	 * @param string $value Raw dimension value.
+	 *
+	 * @return string Sanitized dimension or empty string.
+	 */
+	private function sanitize_css_dimension( string $value ): string {
+		$value = trim( $value );
+
+		// One or more space-separated dimension tokens.
+		if ( preg_match( '/^[\d.]+(px|em|rem|%)(\s+[\d.]+(px|em|rem|%))*$/', $value ) ) {
+			return $value;
+		}
+
+		return '';
+	}
+
+	/**
+	 * Sanitize an external URL for use as an OAuth endpoint.
+	 *
+	 * Requires HTTPS and rejects private/reserved IP ranges
+	 * to prevent Server-Side Request Forgery (SSRF).
+	 *
+	 * @param string $url Raw URL.
+	 *
+	 * @return string Sanitized URL or empty string if invalid.
+	 */
+	private function sanitize_external_url( string $url ): string {
+		$url = esc_url_raw( $url );
+
+		if ( empty( $url ) ) {
+			return '';
+		}
+
+		$parsed = wp_parse_url( $url );
+
+		// Require HTTPS scheme.
+		if ( empty( $parsed['scheme'] ) || 'https' !== $parsed['scheme'] ) {
+			return '';
+		}
+
+		if ( empty( $parsed['host'] ) ) {
+			return '';
+		}
+
+		$host = $parsed['host'];
+
+		// Reject localhost and common loopback names.
+		$blocked_hosts = [ 'localhost', '127.0.0.1', '0.0.0.0', '::1', '[::1]' ];
+		if ( in_array( strtolower( $host ), $blocked_hosts, true ) ) {
+			return '';
+		}
+
+		// Resolve hostname and reject private/reserved IP ranges.
+		$ip = gethostbyname( $host );
+		if ( $ip !== $host ) {
+			if ( ! filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) ) {
+				return '';
+			}
+		}
+
+		return $url;
+	}
+
+	/**
+	 * Encrypt a secret value for storage.
+	 *
+	 * Uses AES-256-CBC with a key derived from WordPress AUTH_KEY salt.
+	 * If the value is already encrypted (prefixed with 'enc:'), it is returned as-is.
+	 * If encryption is unavailable, falls back to storing the raw value.
+	 *
+	 * @param string $value Plaintext secret.
+	 *
+	 * @return string Encrypted secret prefixed with 'enc:' or raw value.
+	 */
+	private function encrypt_secret( string $value ): string {
+		if ( empty( $value ) ) {
+			return '';
+		}
+
+		// Already encrypted — don't double-encrypt.
+		if ( str_starts_with( $value, 'enc:' ) ) {
+			return $value;
+		}
+
+		if ( ! function_exists( 'openssl_encrypt' ) ) {
+			return $value;
+		}
+
+		$key = hash( 'sha256', wp_salt( 'auth' ), true );
+		$iv  = substr( hash( 'sha256', wp_salt( 'secure_auth' ), true ), 0, 16 );
+
+		$encrypted = openssl_encrypt( $value, 'aes-256-cbc', $key, 0, $iv );
+
+		if ( false === $encrypted ) {
+			return $value;
+		}
+
+		return 'enc:' . base64_encode( $encrypted ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+	}
+
+	/**
+	 * Decrypt a stored secret value.
+	 *
+	 * @param string $value Encrypted secret (prefixed with 'enc:') or plaintext.
+	 *
+	 * @return string Decrypted plaintext secret.
+	 */
+	public static function decrypt_secret( string $value ): string {
+		if ( empty( $value ) ) {
+			return '';
+		}
+
+		// Not encrypted — return as-is (backward compatibility).
+		if ( ! str_starts_with( $value, 'enc:' ) ) {
+			return $value;
+		}
+
+		if ( ! function_exists( 'openssl_decrypt' ) ) {
+			return '';
+		}
+
+		$key       = hash( 'sha256', wp_salt( 'auth' ), true );
+		$iv        = substr( hash( 'sha256', wp_salt( 'secure_auth' ), true ), 0, 16 );
+		$encrypted = base64_decode( substr( $value, 4 ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+
+		$decrypted = openssl_decrypt( $encrypted, 'aes-256-cbc', $key, 0, $iv );
+
+		return false !== $decrypted ? $decrypted : '';
 	}
 
 	/**

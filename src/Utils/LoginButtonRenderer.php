@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Circularlizard\OAuthLogin\Utils;
 
 use Circularlizard\OAuthLogin\Interfaces\OAuthProvider;
+use Circularlizard\OAuthLogin\Utils\OAuthState;
 use function Circularlizard\OAuthLogin\plugin;
 
 /**
@@ -102,7 +103,7 @@ class LoginButtonRenderer {
 		}
 		?>
 		<?php if ( ! empty( $hover_style ) ) : ?>
-			<style><?php echo $hover_style; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></style>
+			<style><?php echo wp_strip_all_tags( $hover_style ); ?></style>
 		<?php endif; ?>
 		<div class="oauth-login-button-container">
 			<a class="oauth-login-button oauth-login-button--<?php echo esc_attr( $provider_id ); ?>"
@@ -146,7 +147,7 @@ class LoginButtonRenderer {
 		$args = [
 			'client_id'     => $provider->get_client_id(),
 			'redirect_uri'  => $callback_url,
-			'state'         => base64_encode( wp_json_encode( $state_data ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+			'state'         => OAuthState::encode( $state_data ),
 			'scope'         => implode( ' ', $provider->get_scopes() ),
 			'response_type' => 'code',
 		];

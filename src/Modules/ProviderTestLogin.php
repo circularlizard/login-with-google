@@ -314,7 +314,7 @@ class ProviderTestLogin implements ModuleInterface {
 								type: 'oauth_test_mappings',
 								provider_id: providerId,
 								mappings: mappings
-							}, '*');
+							}, <?php echo wp_json_encode( admin_url() ); ?>);
 							window.close();
 						} else {
 							alert('<?php echo esc_js( __( 'Could not communicate with settings page. Please copy the mappings manually.', 'oauth-login' ) ); ?>');
@@ -341,8 +341,12 @@ class ProviderTestLogin implements ModuleInterface {
 			wp_send_json_error( [ 'message' => __( 'Insufficient permissions.', 'oauth-login' ) ] );
 		}
 
-		$provider_id = sanitize_key( $_POST['provider_id'] ?? '' );
-		$mappings    = isset( $_POST['mappings'] ) ? array_map( 'sanitize_text_field', (array) $_POST['mappings'] ) : [];
+		$provider_id  = sanitize_key( $_POST['provider_id'] ?? '' );
+		$raw_mappings = isset( $_POST['mappings'] ) ? array_map( 'sanitize_text_field', (array) $_POST['mappings'] ) : [];
+
+		// Only allow known mapping keys.
+		$allowed_keys = [ 'email', 'first_name', 'last_name', 'display_name', 'avatar' ];
+		$mappings     = array_intersect_key( $raw_mappings, array_flip( $allowed_keys ) );
 
 		if ( empty( $provider_id ) ) {
 			wp_send_json_error( [ 'message' => __( 'Invalid provider.', 'oauth-login' ) ] );
