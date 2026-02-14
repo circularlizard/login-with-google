@@ -286,56 +286,10 @@ class PluginTest extends TestCase {
 			'oauth-login'
 		);
 
-		WP_Mock::expectActionAdded( 'init', [ $this->testee, 'load_translations' ] );
 		WP_Mock::expectActionAdded( 'plugin_action_links_' . plugin_basename( $this->testee->path ) . '/login-with-google.php', [ $this->testee, 'add_plugin_action_links' ] );
 		WP_Mock::expectFilter( 'rtcamp.google_login_modules', $this->testee->active_modules );
 
 		$this->testee->run();
-		$this->assertConditionsMet();
-	}
-
-	/**
-	 * Test load_translations method.
-	 *
-	 * @covers ::load_translations
-	 */
-	public function testLoadTranslation() {
-
-		$this->moduleMock->expects( $this->never() )
-		                 ->method( 'init' );
-
-		$this->containerMock->expects( $this->never() )
-		                    ->method( 'define_services' );
-
-		$this->wpMockFunction(
-			'get_locale',
-			[],
-			1,
-			'en_US'
-		);
-
-		$this->wpMockFunction(
-			'Circularlizard\OAuthLogin\plugin',
-			[],
-			1,
-			function () {
-				return (object) [
-					'path' => '/some/utterly/fake/path-to-test/',
-				];
-			}
-		);
-
-		$this->wpMockFunction(
-			'load_plugin_textdomain',
-			[
-				'oauth-login',
-				false,
-				'path-to-test/languages/en_US'
-			]
-		);
-
-		$this->testee->load_translations();
-
 		$this->assertConditionsMet();
 	}
 

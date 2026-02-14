@@ -2,7 +2,7 @@
 /**
  * Plugin Name: OAuth Login
  * Description: Allow users to login/register via any OAuth 2.0 provider.
- * Version: 2.1.2
+ * Version: 2.1.3
  * Author: Circularlizard
  * Author URI: https://github.com/circularlizard
  * Text Domain: oauth-login

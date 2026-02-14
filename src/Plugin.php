@@ -110,18 +110,7 @@ class Plugin {
 		$this->container()->define_services();
 		$this->activate_modules();
 
-		add_action( 'init', [ $this, 'load_translations' ] );
-
 		add_action( 'plugin_action_links_' . plugin_basename( $this->path ) . '/login-with-google.php', [ $this, 'add_plugin_action_links' ] );
-	}
-
-	/**
-	 *  Load the plugin translation if available.
-	 *
-	 * @return void
-	 */
-	public function load_translations(): void {
-		load_plugin_textdomain( 'oauth-login', false, basename( plugin()->path ) . '/languages/' . get_locale() );
 	}
 
 	/**

@@ -4,6 +4,7 @@
 .git
 .idea
 .distignore
+.nvmrc
 .phpunit.result.cache
 phpunit.xml.dist
 phpcs.xml

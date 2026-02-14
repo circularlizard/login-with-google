@@ -922,7 +922,7 @@ class Settings implements ModuleInterface {
 		}
 
 		$sanitized = [
-			'version'        => '2.1.2',
+			'version'        => '2.1.3',
 			'providers'      => [],
 			'provider_order' => [],
 		];
