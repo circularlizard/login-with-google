@@ -172,7 +172,7 @@ $white_color: #FFFFFF;
 		}
 
 		// Custom icon (img element).
-		img& {
+		& img {
 			object-fit: contain;
 		}
 	}
