@@ -123,6 +123,7 @@ class Settings implements ModuleInterface {
 		add_action( 'admin_init', [ $this, 'register_settings' ] );
 		add_action( 'admin_menu', [ $this, 'settings_page' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_scripts' ] );
+		add_filter( 'wp_redirect', [ $this, 'pass_reopen_panel_on_save' ] );
 
 		/**
 		 * Filters.
@@ -143,6 +144,28 @@ class Settings implements ModuleInterface {
 		}
 
 		wp_enqueue_script( 'jquery-ui-sortable' );
+	}
+
+	/**
+	 * Pass the oauth_reopen_panel parameter through the settings save redirect.
+	 *
+	 * When the "Save" button is clicked (as opposed to "Save & Close"),
+	 * the hidden field oauth_reopen_panel is set to the provider ID.
+	 * This filter appends it to the redirect URL so the JS can reopen the panel.
+	 *
+	 * @param string $location Redirect URL.
+	 *
+	 * @return string Modified redirect URL.
+	 */
+	public function pass_reopen_panel_on_save( string $location ): string {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified by settings API.
+		$reopen = sanitize_key( $_POST['oauth_reopen_panel'] ?? '' );
+
+		if ( ! empty( $reopen ) && str_contains( $location, 'settings-updated' ) ) {
+			$location = add_query_arg( 'oauth_reopen_panel', $reopen, $location );
+		}
+
+		return $location;
 	}
 
 	/**
@@ -315,6 +338,9 @@ class Settings implements ModuleInterface {
 
 		<!-- Hidden field for provider order -->
 		<input type="hidden" name="wp_oauth_login_settings[provider_order]" id="oauth-provider-order" value="<?php echo esc_attr( implode( ',', $order ) ); ?>" />
+
+		<!-- Hidden field to reopen a panel after save -->
+		<input type="hidden" name="oauth_reopen_panel" id="oauth-reopen-panel" value="" />
 
 		<div style="margin-top: 15px;">
 			<button type="button" class="button" id="oauth-add-google-provider" <?php echo $this->has_provider_config( 'google' ) ? 'disabled' : ''; ?>>
@@ -658,7 +684,12 @@ class Settings implements ModuleInterface {
 			<?php endif; ?>
 
 			<p>
-				<?php submit_button( __( 'Save Changes', 'oauth-login' ), 'primary', 'submit', false ); ?>
+				<button type="submit" class="button button-primary oauth-save-provider" data-provider="<?php echo esc_attr( $provider_id ); ?>">
+					<?php esc_html_e( 'Save', 'oauth-login' ); ?>
+				</button>
+				<button type="submit" class="button oauth-save-close-provider">
+					<?php echo esc_html__( 'Save', 'oauth-login' ) . ' &amp; ' . esc_html__( 'Close', 'oauth-login' ); ?>
+				</button>
 				<?php if ( ! $is_new && ! $is_google ) : ?>
 					<button type="button" class="button oauth-test-provider" data-provider="<?php echo esc_attr( $provider_id ); ?>">
 						<?php echo esc_html__( 'Test Configuration', 'oauth-login' ) . ' &amp; ' . esc_html__( 'Map Fields', 'oauth-login' ); ?>
@@ -766,6 +797,18 @@ class Settings implements ModuleInterface {
 		?>
 		<script type="text/javascript">
 		jQuery(document).ready(function($) {
+			// Reopen panel after save if requested via URL parameter.
+			var urlParams = new URLSearchParams(window.location.search);
+			var reopenPanel = urlParams.get('oauth_reopen_panel');
+			if (reopenPanel) {
+				$('#oauth-panel-' + reopenPanel).show();
+			}
+
+			// "Save" button sets the reopen field so the panel reopens after page reload.
+			$('.oauth-save-provider').on('click', function() {
+				$('#oauth-reopen-panel').val($(this).data('provider'));
+			});
+
 			// Toggle edit panels.
 			$('.oauth-edit-provider').on('click', function() {
 				var providerId = $(this).data('provider');

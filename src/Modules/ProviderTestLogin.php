@@ -57,8 +57,11 @@ class ProviderTestLogin implements ModuleInterface {
 	 */
 	public function init(): void {
 		add_action( 'wp_ajax_oauth_test_login_init', [ $this, 'handle_test_init' ] );
-		add_action( 'wp_ajax_oauth_test_login_callback', [ $this, 'handle_test_callback' ] );
 		add_action( 'wp_ajax_oauth_test_save_mappings', [ $this, 'handle_save_mappings' ] );
+
+		// Intercept test login callbacks at the real callback URL (login page).
+		// Runs early (priority 1) so it fires before the normal authenticate filter.
+		add_action( 'login_init', [ $this, 'maybe_handle_test_callback' ], 1 );
 	}
 
 	/**
@@ -93,7 +96,7 @@ class ProviderTestLogin implements ModuleInterface {
 
 		$args = [
 			'client_id'     => $provider->get_client_id(),
-			'redirect_uri'  => admin_url( 'admin-ajax.php?action=oauth_test_login_callback' ),
+			'redirect_uri'  => $provider->get_callback_url(),
 			'state'         => base64_encode( wp_json_encode( $state_data ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
 			'scope'         => implode( ' ', $provider->get_scopes() ),
 			'response_type' => 'code',
@@ -105,25 +108,46 @@ class ProviderTestLogin implements ModuleInterface {
 	}
 
 	/**
-	 * Handle the test login callback - exchanges code for token and fetches user data.
+	 * Check if the current login page request is a test login callback.
+	 *
+	 * Inspects the state parameter for test_mode flag and routes to the
+	 * test callback handler if present. This allows the test flow to use
+	 * the same callback URL as the real login flow.
 	 *
 	 * @return void
 	 */
-	public function handle_test_callback(): void {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'Insufficient permissions.', 'oauth-login' ) );
-		}
-
-		$code  = sanitize_text_field( $_GET['code'] ?? '' ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	public function maybe_handle_test_callback(): void {
 		$state = sanitize_text_field( $_GET['state'] ?? '' ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$code  = sanitize_text_field( $_GET['code'] ?? '' ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
-		if ( empty( $code ) || empty( $state ) ) {
-			wp_die( esc_html__( 'Missing authorization code or state.', 'oauth-login' ) );
+		if ( empty( $state ) || empty( $code ) ) {
+			return;
 		}
 
 		$decoded_state = json_decode( base64_decode( $state ), true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
 
-		if ( ! is_array( $decoded_state ) || empty( $decoded_state['provider'] ) || empty( $decoded_state['test_mode'] ) ) {
+		if ( ! is_array( $decoded_state ) || empty( $decoded_state['test_mode'] ) ) {
+			return;
+		}
+
+		// This is a test callback — handle it and exit.
+		$this->handle_test_callback( $code, $decoded_state );
+	}
+
+	/**
+	 * Handle the test login callback - exchanges code for token and fetches user data.
+	 *
+	 * @param string $code          Authorization code from provider.
+	 * @param array  $decoded_state Decoded state data.
+	 *
+	 * @return void
+	 */
+	private function handle_test_callback( string $code, array $decoded_state ): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Insufficient permissions.', 'oauth-login' ) );
+		}
+
+		if ( empty( $decoded_state['provider'] ) ) {
 			wp_die( esc_html__( 'Invalid state data.', 'oauth-login' ) );
 		}
 
@@ -143,7 +167,7 @@ class ProviderTestLogin implements ModuleInterface {
 			wp_die( esc_html__( 'Provider not found.', 'oauth-login' ) );
 		}
 
-		// Exchange code for access token.
+		// Exchange code for access token using the provider's real callback URL.
 		$token_response = wp_remote_post(
 			$provider->get_token_url(),
 			[
@@ -151,7 +175,7 @@ class ProviderTestLogin implements ModuleInterface {
 				'body'    => [
 					'client_id'     => $provider->get_client_id(),
 					'client_secret' => $provider->get_client_secret(),
-					'redirect_uri'  => admin_url( 'admin-ajax.php?action=oauth_test_login_callback' ),
+					'redirect_uri'  => $provider->get_callback_url(),
 					'code'          => $code,
 					'grant_type'    => 'authorization_code',
 				],
