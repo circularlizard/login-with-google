@@ -658,9 +658,10 @@ class Settings implements ModuleInterface {
 			<?php endif; ?>
 
 			<p>
+				<?php submit_button( __( 'Save Changes', 'oauth-login' ), 'primary', 'submit', false ); ?>
 				<?php if ( ! $is_new && ! $is_google ) : ?>
-					<button type="button" class="button button-primary oauth-test-provider" data-provider="<?php echo esc_attr( $provider_id ); ?>">
-						<?php esc_html_e( 'Test Configuration & Map Fields', 'oauth-login' ); ?>
+					<button type="button" class="button oauth-test-provider" data-provider="<?php echo esc_attr( $provider_id ); ?>">
+						<?php echo esc_html__( 'Test Configuration', 'oauth-login' ) . ' &amp; ' . esc_html__( 'Map Fields', 'oauth-login' ); ?>
 					</button>
 				<?php endif; ?>
 				<button type="button" class="button oauth-close-panel" data-provider="<?php echo esc_attr( $provider_id ); ?>">
@@ -800,25 +801,26 @@ class Settings implements ModuleInterface {
 			}
 
 			// Test provider configuration.
+			var testBtnLabel = <?php echo wp_json_encode( __( 'Test Configuration & Map Fields', 'oauth-login' ) ); ?>;
 			$('.oauth-test-provider').on('click', function() {
 				var providerId = $(this).data('provider');
 				var $btn = $(this);
-				$btn.prop('disabled', true).text('<?php echo esc_js( __( 'Initiating...', 'oauth-login' ) ); ?>');
+				$btn.prop('disabled', true).text(<?php echo wp_json_encode( __( 'Initiating...', 'oauth-login' ) ); ?>);
 
 				$.post(ajaxurl, {
 					action: 'oauth_test_login_init',
-					nonce: '<?php echo esc_js( wp_create_nonce( 'oauth_test_login' ) ); ?>',
+					nonce: <?php echo wp_json_encode( wp_create_nonce( 'oauth_test_login' ) ); ?>,
 					provider_id: providerId
 				}, function(response) {
-					$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Test Configuration & Map Fields', 'oauth-login' ) ); ?>');
+					$btn.prop('disabled', false).text(testBtnLabel);
 					if (response.success && response.data.auth_url) {
 						window.open(response.data.auth_url, 'oauth_test_' + providerId, 'width=600,height=700');
 					} else {
-						alert(response.data ? response.data.message : '<?php echo esc_js( __( 'Failed to initiate test login.', 'oauth-login' ) ); ?>');
+						alert(response.data ? response.data.message : <?php echo wp_json_encode( __( 'Failed to initiate test login.', 'oauth-login' ) ); ?>);
 					}
 				}).fail(function() {
-					$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Test Configuration & Map Fields', 'oauth-login' ) ); ?>');
-					alert('<?php echo esc_js( __( 'Request failed. Please try again.', 'oauth-login' ) ); ?>');
+					$btn.prop('disabled', false).text(testBtnLabel);
+					alert(<?php echo wp_json_encode( __( 'Request failed. Please try again.', 'oauth-login' ) ); ?>);
 				});
 			});
 
