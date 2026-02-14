@@ -103,8 +103,9 @@ After any version change, verify:
 ## Build Script Validation
 
 The `bin/build-plugin-zip.sh` script:
-1. Extracts version from `readme.txt` (line 14)
-2. Uses it to name output zip: `oauth-login-{VERSION}.zip`
-3. Validates that version extraction succeeded
+1. **Calls `bin/validate-version.sh`** (line 12) - Validates all versions match before building
+2. Extracts version from `readme.txt` (line 23)
+3. Uses it to name output zip: `oauth-login-{VERSION}.zip`
+4. Aborts with error if version mismatch detected
 
-To add pre-build validation, see `bin/validate-version.sh`.
+**Validation is mandatory** - Build cannot proceed without passing version consistency checks.

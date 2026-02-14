@@ -43,9 +43,9 @@ Found versions:
 ```
 
 ### 2. Build Script Integration
-**File:** `bin/build-plugin-zip.sh`
+**File:** `bin/build-plugin-zip.sh` (lines 10-16)
 
-Updated to call validation before building:
+Validation is now **mandatory** and integrated into the build process:
 ```bash
 # Validate version consistency before building
 echo "Validating version consistency..."
@@ -56,7 +56,11 @@ if ! ./bin/validate-version.sh; then
 fi
 ```
 
-**Result:** Build process now fails fast if versions don't match, preventing release of incorrectly versioned packages.
+**Result:** 
+- Build cannot proceed without passing validation
+- Fails fast if versions don't match
+- Prevents release of incorrectly versioned packages
+- Provides clear error messages with specific files to update
 
 ### 3. Windsurf Rules Documentation
 **File:** `.windsurf/rules/versioning.md`
@@ -167,7 +171,7 @@ Exit code: 0 (success)
 
 ## Build Integration Testing
 
-Full build process tested with validation:
+Full build process tested with mandatory validation:
 
 ```bash
 $ composer run build-plugin-zip
@@ -181,7 +185,15 @@ Found versions:
 ✅ All versions match: 2.1.0
 
 Copying project files to temporary release directory...
-[... build continues ...]
+📦 Installing PHP dependencies (without dev)...
+📦 Installing Node.js dependencies...
+⚡ Building assets...
+✔ Mix compiled successfully
+✔ Compiled successfully
+🧹 Cleaning up node_modules...
+Creating final release directory...
+Creating release zip...
+Cleaning up...
 ✅ Release zip created at: /path/to/release/oauth-login-2.1.0.zip
 ```
 
@@ -206,62 +218,72 @@ oauth-login-2.1.0/assets/build/css/button/style-2.1.0.css
 | Aspect | Before | After |
 |--------|--------|-------|
 | Version consistency | Manual sync | Automated validation |
-| Build failure on mismatch | No | Yes (fails fast) |
-| Error detection | Post-build | Pre-build |
-| Documentation | Minimal | Comprehensive |
+| Build failure on mismatch | No | Yes (mandatory, fails fast) |
+| Error detection | Post-build | Pre-build (Stage 0) |
+| Validation timing | Optional | Integrated into build |
+| Documentation | Minimal | Comprehensive (3 files) |
 | Increment procedure | Unclear | Step-by-step guide |
 | Validation script | None | `bin/validate-version.sh` |
+| Build commands | Basic | Clear distinction (dev vs release) |
 
 ## Files Created/Modified
 
 **Created:**
-- `.windsurf/rules/versioning.md` - Version management rules
-- `.windsurf/BUILD_PROCESS.md` - Complete build documentation
-- `bin/validate-version.sh` - Automated validation script
-- `.windsurf/VERSION_MANAGEMENT_SUMMARY.md` - This document
+- `.windsurf/rules/versioning.md` - Version management rules with `trigger: model_decision` frontmatter
+- `.windsurf/BUILD_PROCESS.md` - Complete build documentation (352 lines)
+- `bin/validate-version.sh` - Automated validation script (57 lines, executable)
+- `.windsurf/VERSION_MANAGEMENT_SUMMARY.md` - This document (268 lines)
 
 **Modified:**
-- `bin/build-plugin-zip.sh` - Added validation call
+- `bin/build-plugin-zip.sh` - Added mandatory validation call (lines 10-16)
 - `readme.txt` - Updated stable tag to 2.1.0 (version sync fix)
 
 ## Usage Commands
 
 ```bash
-# Validate versions without building
+# Validate versions without building (standalone)
 ./bin/validate-version.sh
 
-# Build with automatic validation
+# Build frontend assets only (no validation, no zip)
 npm run production
+
+# Full release build (mandatory validation + assets + zip)
 composer run build-plugin-zip
 
 # Check build output
 ls -lh release/oauth-login-*.zip
 unzip -l release/oauth-login-2.1.0.zip | head -20
+unzip -l release/oauth-login-2.1.0.zip | grep "style-"
 ```
 
 ## Windsurf Rules Integration
 
 The versioning rules are now part of the project's windsurf configuration:
-- `.windsurf/rules/versioning.md` - Enforced during development
-- `.windsurf/BUILD_PROCESS.md` - Reference for build procedures
-- Validation script runs automatically before each build
+- `.windsurf/rules/versioning.md` - Enforced during development (with `trigger: model_decision`)
+- `.windsurf/BUILD_PROCESS.md` - Reference for build procedures (352 lines, detailed)
+- `.windsurf/VERSION_MANAGEMENT_SUMMARY.md` - Quick reference and review summary
+- Validation script runs **automatically and mandatorily** before each release build
 
 ## Future Enhancements (Optional)
 
 Potential improvements for future consideration:
-1. Git hook to validate versions before commit
-2. Automated version bump script
+1. Git pre-commit hook to validate versions before commit
+2. Automated version bump script (updates all 4 files)
 3. Changelog generation from version tags
 4. Release notes template
 5. CI/CD integration for automated builds
+6. GitHub Actions workflow for releases
+7. Automatic WordPress.org plugin submission
 
 ## Conclusion
 
 The build process now has:
-- ✅ Automated version consistency validation
-- ✅ Fail-fast mechanism for mismatches
-- ✅ Comprehensive documentation
-- ✅ Clear increment procedures
-- ✅ Verified working implementation
+- ✅ **Mandatory** automated version consistency validation (Stage 0)
+- ✅ Fail-fast mechanism for mismatches (exits with code 1)
+- ✅ Comprehensive documentation (3 markdown files)
+- ✅ Clear increment procedures (step-by-step guide)
+- ✅ Verified working implementation (tested and passing)
+- ✅ Integrated into release build command
+- ✅ Clear error messages with specific file locations
 
-The output filename will always match the plugin version, preventing the previous mismatch issue.
+**Guarantee:** The output filename will always match the plugin version. Build cannot complete if versions don't match.
