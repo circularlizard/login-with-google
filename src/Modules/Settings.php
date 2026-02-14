@@ -216,7 +216,13 @@ class Settings implements ModuleInterface {
 	 * @return void
 	 */
 	public function register_settings(): void {
-		register_setting( 'wp_google_login', 'wp_google_login_settings' );
+		register_setting(
+			'wp_google_login',
+			'wp_google_login_settings',
+			[
+				'sanitize_callback' => [ $this, 'sanitize_settings' ],
+			]
+		);
 		register_setting(
 			'wp_oauth_login',
 			'wp_oauth_login_settings',
@@ -908,7 +914,7 @@ class Settings implements ModuleInterface {
 			$legacy              = get_option( 'wp_google_login_settings', [] );
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified by settings API, legacy settings are not security-sensitive.
 			$posted_legacy = array_intersect_key(
-				array_map( 'sanitize_text_field', (array) $_POST['wp_google_login_settings'] ), // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified by settings API.
+				array_map( 'sanitize_text_field', (array) wp_unslash( $_POST['wp_google_login_settings'] ) ), // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified by settings API.
 				array_flip( $allowed_legacy_keys )
 			);
 			$legacy        = array_merge( $legacy, $posted_legacy );

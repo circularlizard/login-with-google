@@ -134,7 +134,7 @@ class SettingsTest extends TestCase {
 			]
 		);
 
-		// Legacy Google + General + One Tap + Custom Providers = 4 sections (no registry set).
+		// Providers + General = 2 sections (One Tap not added without Google enabled).
 		WP_Mock::userFunction(
 			'add_settings_section',
 			[
@@ -144,15 +144,15 @@ class SettingsTest extends TestCase {
 					\WP_Mock\Functions::type( 'callable' ),
 					\WP_Mock\Functions::type( 'string' ),
 				],
-				'times' => 4
+				'times' => 2
 			]
 		);
 
-		// 2 legacy Google fields + 2 general + 2 one tap + 1 custom providers = 7 fields.
+		// 2 general fields (registration + whitelisted domains).
 		WP_Mock::userFunction(
 			'add_settings_field',
 			[
-				'times' => 7
+				'times' => 2
 			]
 		);
 
@@ -182,19 +182,19 @@ class SettingsTest extends TestCase {
 			]
 		);
 
-		// Provider section + General + One Tap + Custom Providers = 4 sections.
+		// Providers + General = 2 sections (One Tap not added without Google enabled).
 		WP_Mock::userFunction(
 			'add_settings_section',
 			[
-				'times' => 4,
+				'times' => 2,
 			]
 		);
 
-		// 3 provider fields + 2 general + 2 one tap + 1 custom providers = 8 fields.
+		// 2 general fields (registration + whitelisted domains).
 		WP_Mock::userFunction(
 			'add_settings_field',
 			[
-				'times' => 8,
+				'times' => 2,
 			]
 		);
 
@@ -236,10 +236,11 @@ class SettingsTest extends TestCase {
 		);
 
 		// Now expects both settings groups.
-		WP_Mock::userFunction(
+		$this->wpMockFunction(
 			'settings_fields',
 			[
-				'times' => 2,
+				'wp_oauth_login',
+				'times' => 1,
 			]
 		);
 
@@ -394,6 +395,13 @@ class SettingsTest extends TestCase {
 			]
 		);
 
+		WP_Mock::userFunction(
+			'wp_salt',
+			[
+				'return' => 'test-salt-key',
+			]
+		);
+
 		$input = [
 			'providers' => [
 				'google' => [
@@ -433,6 +441,13 @@ class SettingsTest extends TestCase {
 			'esc_url_raw',
 			[
 				'return_arg' => 0,
+			]
+		);
+
+		WP_Mock::userFunction(
+			'wp_salt',
+			[
+				'return' => 'test-salt-key',
 			]
 		);
 

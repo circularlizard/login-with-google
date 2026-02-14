@@ -331,14 +331,14 @@ class Login implements ModuleInterface {
 				$this->authenticated = true;
 
 				/**
-				 * Fires once the user has been authenticated via OAuth.
+				 * Fires after user is authenticated via OAuth.
 				 *
 				 * @since 2.1.0
 				 *
 				 * @param WP_User $user        WP User object.
 				 * @param string  $provider_id Provider ID.
 				 */
-				do_action( 'oauth.user_authenticated', $user, $provider_id );
+				do_action( 'oauth_login_user_authenticated', $user, $provider_id );
 				do_action( 'rtcamp.google_user_authenticated', $user );
 
 				return $user;

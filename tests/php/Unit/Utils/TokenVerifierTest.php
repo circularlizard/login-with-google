@@ -60,7 +60,7 @@ class TokenVerifierTest extends TestCase {
 	 * @covers ::get_supported_algorithm
 	 */
 	public function testGetSupportedAlgorithmDefault() {
-		\WP_Mock::expectFilter( 'rtcamp.default_algorithm', OPENSSL_ALGO_SHA256, '' );
+		\WP_Mock::expectFilter( 'oauth_login_default_algorithm', OPENSSL_ALGO_SHA256, '' );
 		$expected = OPENSSL_ALGO_SHA256;
 		$algo = $this->testee::get_supported_algorithm();
 

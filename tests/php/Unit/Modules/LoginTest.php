@@ -73,7 +73,7 @@ class LoginTest extends TestCase {
 	 * @covers ::init
 	 */
 	public function testInit() {
-		WP_Mock::expectActionAdded( 'login_form', [ $this->testee, 'login_button' ] );
+		WP_Mock::expectActionAdded( 'login_footer', [ $this->testee, 'login_button' ] );
 		WP_Mock::expectActionAdded( 'authenticate', [ $this->testee, 'authenticate' ], 20 );
 		WP_Mock::expectActionAdded( 'rtcamp.google_register_user', [ $this->authenticatorMock, 'register' ] );
 		WP_Mock::expectActionAdded( 'rtcamp.google_user_created', [ $this->testee, 'user_meta' ] );

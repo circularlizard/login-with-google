@@ -97,7 +97,7 @@ class OneTapLogin implements Module {
 			add_action( 'login_enqueue_scripts', [ $this, 'one_tap_scripts' ] );
 			add_action( 'login_footer', [ $this, 'one_tap_prompt' ] );
 			add_action( 'wp_ajax_nopriv_validate_id_token', [ $this, 'validate_token' ] );
-			add_action( 'rtcamp.id_token_verified', [ $this, 'authenticate' ] );
+			add_action( 'oauth_login_id_token_verified', [ $this, 'authenticate' ] );
 		}
 
 		/**
@@ -189,13 +189,13 @@ class OneTapLogin implements Module {
 			}
 
 			/**
-			 * Do something when token has been verified successfully.
+			 * Fires when ID token is verified.
 			 *
 			 * If we are here that means ID token has been verified.
 			 *
 			 * @since 1.0.16
 			 */
-			do_action( 'rtcamp.id_token_verified' );
+			do_action( 'oauth_login_id_token_verified' );
 
 			$redirect_to   = apply_filters( 'rtcamp.google_default_redirect', admin_url() );
 			$state         = Helper::filter_input( INPUT_POST, 'state', FILTER_SANITIZE_FULL_SPECIAL_CHARS );

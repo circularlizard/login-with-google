@@ -117,8 +117,8 @@ class ProviderTestLogin implements ModuleInterface {
 	 * @return void
 	 */
 	public function maybe_handle_test_callback(): void {
-		$state = sanitize_text_field( $_GET['state'] ?? '' ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$code  = sanitize_text_field( $_GET['code'] ?? '' ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$state = isset( $_GET['state'] ) ? sanitize_text_field( wp_unslash( $_GET['state'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$code  = isset( $_GET['code'] ) ? sanitize_text_field( wp_unslash( $_GET['code'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 		if ( empty( $state ) || empty( $code ) ) {
 			return;
@@ -366,7 +366,7 @@ class ProviderTestLogin implements ModuleInterface {
 		}
 
 		$provider_id  = sanitize_key( $_POST['provider_id'] ?? '' );
-		$raw_mappings = isset( $_POST['mappings'] ) ? array_map( 'sanitize_text_field', (array) $_POST['mappings'] ) : [];
+		$raw_mappings = isset( $_POST['mappings'] ) ? array_map( 'sanitize_text_field', (array) wp_unslash( $_POST['mappings'] ) ) : [];
 
 		// Only allow known mapping keys.
 		$allowed_keys = [ 'email', 'first_name', 'last_name', 'display_name', 'avatar' ];
