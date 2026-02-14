@@ -24,11 +24,14 @@ use Circularlizard\OAuthLogin\Modules\Login;
 use Circularlizard\OAuthLogin\Providers\Google\OneTapLogin as GoogleOneTapLogin;
 use Circularlizard\OAuthLogin\Providers\Google\TokenVerifier as GoogleTokenVerifier;
 use Circularlizard\OAuthLogin\Modules\Settings;
+use Circularlizard\OAuthLogin\Modules\ProviderTestLogin;
 use Circularlizard\OAuthLogin\Utils\Authenticator;
 use Circularlizard\OAuthLogin\Utils\GoogleClient;
 use Circularlizard\OAuthLogin\Modules\Shortcode;
 use Circularlizard\OAuthLogin\Utils\ProviderRegistry;
+use Circularlizard\OAuthLogin\Utils\LoginButtonRenderer;
 use Circularlizard\OAuthLogin\Providers\GoogleProvider;
+use Circularlizard\OAuthLogin\Providers\CustomProvider;
 
 /**
  * Class Container
@@ -96,16 +99,10 @@ class Container implements ContainerInterface {
 		$this->container['settings'] = function ( PimpleContainer $c ) {
 			$settings = new Settings();
 
-			// Inject provider registry if available (deferred to avoid circular dependency).
-			add_action(
-				'plugins_loaded',
-				function () use ( $c, $settings ) {
-					if ( isset( $c['provider_registry'] ) ) {
-						$settings->set_registry( $c['provider_registry'] );
-					}
-				},
-				5
-			);
+			// Inject provider registry directly (all factories are defined before instantiation).
+			if ( isset( $c['provider_registry'] ) ) {
+				$settings->set_registry( $c['provider_registry'] );
+			}
 
 			return $settings;
 		};
@@ -118,7 +115,16 @@ class Container implements ContainerInterface {
 		 * @return Login
 		 */
 		$this->container['login_flow'] = function ( PimpleContainer $c ) {
-			return new Login( $c['gh_client'], $c['authenticator'] );
+			$login = new Login( $c['gh_client'], $c['authenticator'] );
+
+			if ( isset( $c['login_button_renderer'] ) ) {
+				$login->set_button_renderer( $c['login_button_renderer'] );
+			}
+			if ( isset( $c['provider_registry'] ) ) {
+				$login->set_provider_registry( $c['provider_registry'] );
+			}
+
+			return $login;
 		};
 
 		/**
@@ -129,12 +135,18 @@ class Container implements ContainerInterface {
 		 * @return GoogleClient
 		 */
 		$this->container['gh_client'] = function ( PimpleContainer $c ) {
-			$settings = $c['settings'];
+			$settings          = $c['settings'];
+			$provider_settings = get_option( 'wp_oauth_login_settings', [] );
+			$google_config     = $provider_settings['providers']['google'] ?? [];
+
+			// Prefer new provider settings, fall back to legacy settings.
+			$client_id     = ! empty( $google_config['client_id'] ) ? $google_config['client_id'] : ( $settings->client_id ?? '' );
+			$client_secret = ! empty( $google_config['client_secret'] ) ? $google_config['client_secret'] : ( $settings->client_secret ?? '' );
 
 			return new GoogleClient(
 				[
-					'client_id'     => $settings->client_id,
-					'client_secret' => $settings->client_secret,
+					'client_id'     => $client_id,
+					'client_secret' => $client_secret,
 					'redirect_uri'  => wp_login_url(),
 				]
 			);
@@ -157,7 +169,13 @@ class Container implements ContainerInterface {
 		 * @return Shortcode
 		 */
 		$this->container['shortcode'] = function ( PimpleContainer $c ) {
-			return new Shortcode( $c['gh_client'], $c['assets'] );
+			$shortcode = new Shortcode( $c['gh_client'], $c['assets'] );
+
+			if ( isset( $c['login_button_renderer'] ) ) {
+				$shortcode->set_button_renderer( $c['login_button_renderer'] );
+			}
+
+			return $shortcode;
 		};
 
 		/**
@@ -213,7 +231,13 @@ class Container implements ContainerInterface {
 		 * @return Block
 		 */
 		$this->container['google_login_block'] = function ( PimpleContainer $c ) {
-			return new Block( $c['assets'], $c['gh_client'] );
+			$block = new Block( $c['assets'], $c['gh_client'] );
+
+			if ( isset( $c['login_button_renderer'] ) ) {
+				$block->set_button_renderer( $c['login_button_renderer'] );
+			}
+
+			return $block;
 		};
 
 
@@ -225,15 +249,26 @@ class Container implements ContainerInterface {
 		 * @return ProviderRegistry
 		 */
 		$this->container['provider_registry'] = function ( PimpleContainer $c ) {
-			$registry = new ProviderRegistry();
-			$settings = $c['settings'];
+			$registry          = new ProviderRegistry();
+			$provider_settings = get_option( 'wp_oauth_login_settings', [] );
+			$providers         = $provider_settings['providers'] ?? [];
 
-			// Register Google provider.
-			$google = new GoogleProvider(
-				$settings->client_id ?? '',
-				$settings->client_secret ?? ''
-			);
-			$registry->register( $google );
+			foreach ( $providers as $provider_id => $config ) {
+				$type = $config['type'] ?? 'custom';
+
+				if ( 'google' === $type || 'google' === $provider_id ) {
+					$google = new GoogleProvider(
+						$config['client_id'] ?? '',
+						$config['client_secret'] ?? ''
+					);
+					$registry->register( $google );
+				} else {
+					$custom = new CustomProvider(
+						array_merge( $config, [ 'provider_id' => $provider_id ] )
+					);
+					$registry->register( $custom );
+				}
+			}
 
 			/**
 			 * Allow third-party providers to register.
@@ -245,6 +280,34 @@ class Container implements ContainerInterface {
 			do_action( 'oauth.register_providers', $registry );
 
 			return $registry;
+		};
+
+		/**
+		 * Define Login Button Renderer service.
+		 *
+		 * @param PimpleContainer $c Pimple container object.
+		 *
+		 * @return LoginButtonRenderer
+		 */
+		$this->container['login_button_renderer'] = function ( PimpleContainer $c ) {
+			return new LoginButtonRenderer( $c['provider_registry'], $c['settings'] );
+		};
+
+		/**
+		 * Define Provider Test Login service.
+		 *
+		 * @param PimpleContainer $c Pimple container object.
+		 *
+		 * @return ProviderTestLogin
+		 */
+		$this->container['provider_test_login'] = function ( PimpleContainer $c ) {
+			$test_login = new ProviderTestLogin();
+
+			if ( isset( $c['provider_registry'] ) ) {
+				$test_login->set_registry( $c['provider_registry'] );
+			}
+
+			return $test_login;
 		};
 
 		/**

@@ -17,6 +17,7 @@ namespace Circularlizard\OAuthLogin\Modules;
 
 use Circularlizard\OAuthLogin\Utils\Helper;
 use Circularlizard\OAuthLogin\Utils\GoogleClient;
+use Circularlizard\OAuthLogin\Utils\LoginButtonRenderer;
 use Circularlizard\OAuthLogin\Interfaces\Module;
 use function Circularlizard\OAuthLogin\plugin;
 
@@ -47,6 +48,24 @@ class Block implements Module {
 	 * @var GoogleClient
 	 */
 	public $client;
+
+	/**
+	 * Login button renderer.
+	 *
+	 * @var LoginButtonRenderer|null
+	 */
+	private $button_renderer;
+
+	/**
+	 * Set the login button renderer.
+	 *
+	 * @param LoginButtonRenderer $renderer Button renderer.
+	 *
+	 * @return void
+	 */
+	public function set_button_renderer( LoginButtonRenderer $renderer ): void {
+		$this->button_renderer = $renderer;
+	}
 
 	/**
 	 * Module name.
@@ -138,6 +157,12 @@ class Block implements Module {
 			! is_user_logged_in() ||
 			apply_filters( 'rtcamp.google_login_button_display', false )
 		) {
+			// Use multi-provider renderer if available.
+			if ( null !== $this->button_renderer ) {
+				return $this->button_renderer->render( false );
+			}
+
+			// Fallback to legacy Google-only button.
 			$markup = $this->markup(
 				[
 					'login_url'           => $this->client->authorization_url(),

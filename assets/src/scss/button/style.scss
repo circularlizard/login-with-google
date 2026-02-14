@@ -80,3 +80,105 @@ $white_color: #FFFFFF;
 		margin-right: 10px;
 	}
 }
+
+// Multi-provider OAuth login styles.
+.oauth-login-separator {
+	position: relative;
+	text-align: center;
+	margin: 20px 0 15px;
+	clear: both;
+
+	&::before {
+		content: '';
+		position: absolute;
+		left: 0;
+		width: 100%;
+		background-color: $light_gray_color;
+		height: 1px;
+		top: 50%;
+	}
+
+	span {
+		text-transform: lowercase;
+		color: #999;
+		background-color: #f1f1f1;
+		font-size: 13px;
+		padding: 0 10px;
+		position: relative;
+		z-index: 2;
+	}
+}
+
+.oauth-login-buttons {
+	margin: 0 auto;
+	clear: both;
+}
+
+.oauth-login-button-container {
+	margin-top: 8px;
+
+	&:first-child {
+		margin-top: 0;
+	}
+}
+
+.oauth-login-button {
+	border-color: $gray_color;
+	border-style: solid;
+	border-width: 1px 1px 2px;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	margin: 0;
+	outline: 0;
+	overflow: hidden;
+	font-weight: 500;
+	text-overflow: ellipsis;
+	text-decoration: none;
+	box-sizing: border-box;
+	font-size: 14px;
+	line-height: 25px;
+	border-radius: 4px;
+	padding: 10px 15px;
+	background-color: $white_color;
+	color: #3d4145;
+	text-align: center;
+	transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+
+	&:hover {
+		color: #3d4145;
+		text-decoration: none;
+	}
+
+	&:focus {
+		outline: 0;
+		box-shadow: 0 0 0 1px #4f94d4, 0 0 2px 1px rgba(79, 148, 212, 0.8);
+	}
+
+	&__icon {
+		width: 20px;
+		height: 20px;
+		display: inline-block;
+		vertical-align: middle;
+		margin-right: 10px;
+		flex-shrink: 0;
+
+		// Default Google icon.
+		&--google {
+			background: url("../../images/google_light.png") no-repeat center;
+			background-size: contain;
+		}
+
+		// Custom icon (img element).
+		img& {
+			object-fit: contain;
+		}
+	}
+
+	&__text {
+		flex: 1;
+		text-align: center;
+	}
+}
