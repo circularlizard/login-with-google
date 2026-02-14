@@ -140,6 +140,21 @@ Code snippets to extend and customize the plugin can be found [here](https://git
 
 == Changelog ==
 
+= 2.1.0 =
+* Feature: Multi-provider OAuth 2.0 architecture - support for Google and custom OAuth providers
+* Feature: Provider management UI with test mode for configuration validation
+* Feature: Extensible provider system via oauth.register_providers action
+* Security: HMAC-signed OAuth state parameters to prevent tampering
+* Security: AES-256-CBC encryption for provider secrets at rest
+* Security: SSRF protection with URL validation
+* Security: postMessage origin validation
+* Security: Strict input sanitization for colors, dimensions, and URLs
+* Update: Customizable login button styles and positioning
+* Update: Save/Save & Close buttons in provider edit panels
+* Update: Versioned CSS assets for cache busting
+* Fix: Login button positioning via login_footer hook with JS repositioning
+* Fix: Test login callback URL consistency
+
 = 1.4.2 =
 Fix: Migrated rtcamp.google_redirect_url from action to filter.
 Chore: Documentation update.
@@ -229,6 +244,9 @@ Chore: Documentation update.
 * Maintenance release: Updated minimum requirements.
 
 == Upgrade Notice ==
+
+= 2.1.0 =
+Major update: Multi-provider OAuth 2.0 architecture with enhanced security features. Adds support for custom OAuth providers, provider management UI, test mode, and comprehensive security hardening including HMAC-signed state and encrypted secrets.
 
 = 1.4.2 =
 Fix: Migrated rtcamp.google_redirect_url from action to filter.

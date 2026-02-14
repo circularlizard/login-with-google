@@ -103,7 +103,7 @@ class LoginButtonRenderer {
 		}
 		?>
 		<?php if ( ! empty( $hover_style ) ) : ?>
-			<style><?php echo wp_strip_all_tags( $hover_style ); ?></style>
+			<style><?php echo esc_html( wp_strip_all_tags( $hover_style ) ); ?></style>
 		<?php endif; ?>
 		<div class="oauth-login-button-container">
 			<a class="oauth-login-button oauth-login-button--<?php echo esc_attr( $provider_id ); ?>"
@@ -171,7 +171,7 @@ class LoginButtonRenderer {
 	 * @return string Button text.
 	 */
 	private function get_button_text( OAuthProvider $provider ): string {
-		$provider_id = $provider->get_provider_id();
+		$provider_id   = $provider->get_provider_id();
 		$settings_text = $this->settings->get_provider_setting( $provider_id, 'button_text', '' );
 
 		if ( ! empty( $settings_text ) ) {
@@ -189,7 +189,7 @@ class LoginButtonRenderer {
 	 * @return string Icon URL.
 	 */
 	private function get_button_icon( OAuthProvider $provider ): string {
-		$provider_id = $provider->get_provider_id();
+		$provider_id   = $provider->get_provider_id();
 		$settings_icon = $this->settings->get_provider_setting( $provider_id, 'button_icon', '' );
 
 		if ( ! empty( $settings_icon ) ) {
@@ -207,8 +207,8 @@ class LoginButtonRenderer {
 	 * @return array Button styles.
 	 */
 	private function get_button_styles( OAuthProvider $provider ): array {
-		$provider_id    = $provider->get_provider_id();
-		$default_styles = $provider->get_button_styles();
+		$provider_id     = $provider->get_provider_id();
+		$default_styles  = $provider->get_button_styles();
 		$settings_styles = $this->settings->get_provider_setting( $provider_id, 'button_styles', [] );
 
 		if ( is_array( $settings_styles ) && ! empty( $settings_styles ) ) {

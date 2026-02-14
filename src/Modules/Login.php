@@ -230,6 +230,7 @@ class Login implements ModuleInterface {
 	 * @param array  $decoded_state Decoded state data.
 	 *
 	 * @return WP_User|WP_Error
+	 * @throws Exception If authentication fails.
 	 */
 	private function authenticate_google( string $code, array $decoded_state ) {
 		try {
@@ -267,6 +268,7 @@ class Login implements ModuleInterface {
 	 * @param array  $decoded_state Decoded state data.
 	 *
 	 * @return WP_User|WP_Error
+	 * @throws Exception If authentication fails.
 	 */
 	private function authenticate_custom( string $code, string $provider_id, array $decoded_state ) {
 		if ( null === $this->provider_registry ) {

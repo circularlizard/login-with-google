@@ -228,9 +228,9 @@ class ProviderTestLogin implements ModuleInterface {
 	/**
 	 * Render the test result page in the popup.
 	 *
-	 * @param string        $provider_id Provider ID.
-	 * @param object|null   $user_data   Raw user data from provider.
-	 * @param string|null   $error       Error message if any.
+	 * @param string      $provider_id Provider ID.
+	 * @param object|null $user_data   Raw user data from provider.
+	 * @param string|null $error       Error message if any.
 	 *
 	 * @return void
 	 */
