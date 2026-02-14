@@ -66,6 +66,15 @@ mkdir -p "$FINAL_DIR"
 
 rsync -av --exclude-from="$ROOT_DIR/.distignore" "$TEMP_DIR/" "$FINAL_DIR/"
 
+# Verify exclusions worked
+echo "Checking for excluded files in final directory..."
+if [ -d "$FINAL_DIR/.windsurf" ]; then
+    echo "⚠️  WARNING: .windsurf directory still present!"
+fi
+if [ -f "$FINAL_DIR/.DS_Store" ]; then
+    echo "⚠️  WARNING: .DS_Store file still present!"
+fi
+
 # Create release zip with version
 echo "Creating release zip..."
 zip -r "$ZIP_FILE" "$(basename "$FINAL_DIR")"
