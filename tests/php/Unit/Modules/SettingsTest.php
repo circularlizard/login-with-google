@@ -396,6 +396,13 @@ class SettingsTest extends TestCase {
 		);
 
 		WP_Mock::userFunction(
+			'wp_unslash',
+			[
+				'return_arg' => 0,
+			]
+		);
+
+		WP_Mock::userFunction(
 			'wp_salt',
 			[
 				'return' => 'test-salt-key',
@@ -416,7 +423,8 @@ class SettingsTest extends TestCase {
 
 		$this->assertTrue( $result['providers']['google']['enabled'] );
 		$this->assertEquals( 'my-client-id', $result['providers']['google']['client_id'] );
-		$this->assertEquals( 'my-secret', $result['providers']['google']['client_secret'] );
+		// Client secret should be encrypted with 'enc:' prefix.
+		$this->assertStringStartsWith( 'enc:', $result['providers']['google']['client_secret'] );
 	}
 
 	/**
@@ -432,6 +440,13 @@ class SettingsTest extends TestCase {
 
 		WP_Mock::userFunction(
 			'sanitize_text_field',
+			[
+				'return_arg' => 0,
+			]
+		);
+
+		WP_Mock::userFunction(
+			'wp_unslash',
 			[
 				'return_arg' => 0,
 			]
