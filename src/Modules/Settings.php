@@ -220,7 +220,7 @@ class Settings implements ModuleInterface {
 			'wp_google_login',
 			'wp_google_login_settings',
 			[
-				'sanitize_callback' => [ $this, 'sanitize_settings' ],
+				'sanitize_callback' => [ $this, 'sanitize_legacy_settings' ],
 			]
 		);
 		register_setting(
@@ -900,68 +900,106 @@ class Settings implements ModuleInterface {
 	}
 
 	/**
-	 * Sanitize settings before saving.
+	 * Sanitize legacy Google login settings.
 	 *
-	 * @param array $input Raw input.
+	 * @param mixed $input Raw input (may be array, null, or other type).
 	 *
 	 * @return array Sanitized input.
 	 */
-	public function sanitize_settings( array $input ): array {
-		// Save legacy settings if present in POST data.
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified by settings API, legacy settings are not security-sensitive.
-		if ( isset( $_POST['wp_google_login_settings'] ) && is_array( $_POST['wp_google_login_settings'] ) ) {
-			$allowed_legacy_keys = [ 'client_id', 'client_secret', 'registration_enabled', 'one_tap_login', 'one_tap_login_screen', 'whitelisted_domains' ];
-			$legacy              = get_option( 'wp_google_login_settings', [] );
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified by settings API, legacy settings are not security-sensitive.
-			$posted_legacy = array_intersect_key(
-				array_map( 'sanitize_text_field', (array) wp_unslash( $_POST['wp_google_login_settings'] ) ), // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified by settings API.
-				array_flip( $allowed_legacy_keys )
-			);
-			$legacy        = array_merge( $legacy, $posted_legacy );
-			update_option( 'wp_google_login_settings', $legacy );
+	public function sanitize_legacy_settings( $input ): array {
+		if ( ! is_array( $input ) ) {
+			return [];
 		}
 
-		$sanitized = [
-			'version'        => '2.1.4',
-			'providers'      => [],
-			'provider_order' => [],
-		];
-
-		// Sanitize provider settings.
-		if ( isset( $input['providers'] ) && is_array( $input['providers'] ) ) {
-			foreach ( $input['providers'] as $provider_id => $settings ) {
-				$provider_id = sanitize_key( $provider_id );
-
-				// Skip if marked for deletion.
-				if ( ! empty( $settings['delete'] ) ) {
-					continue;
-				}
-
-				$sanitized['providers'][ $provider_id ] = $this->sanitize_provider( $settings );
-			}
-		}
-
-		// Handle new provider addition.
-		if ( isset( $input['new_provider'] ) && ! empty( $input['new_provider']['slug'] ) ) {
-			$new_slug = sanitize_key( $input['new_provider']['slug'] );
-
-			if ( ! empty( $new_slug ) && ! isset( $sanitized['providers'][ $new_slug ] ) ) {
-				$sanitized['providers'][ $new_slug ] = $this->sanitize_provider( $input['new_provider'] );
-			}
-		}
-
-		// Sanitize provider order.
-		if ( ! empty( $input['provider_order'] ) ) {
-			$order = is_array( $input['provider_order'] )
-				? $input['provider_order']
-				: array_filter( array_map( 'trim', explode( ',', $input['provider_order'] ) ) );
-
-			$sanitized['provider_order'] = array_map( 'sanitize_key', $order );
-		} else {
-			$sanitized['provider_order'] = array_keys( $sanitized['providers'] );
-		}
+		$allowed_keys = [ 'client_id', 'client_secret', 'registration_enabled', 'one_tap_login', 'one_tap_login_screen', 'whitelisted_domains' ];
+		
+		$sanitized = array_intersect_key(
+			array_map( 'sanitize_text_field', $input ),
+			array_flip( $allowed_keys )
+		);
 
 		return $sanitized;
+	}
+
+	/**
+	 * Sanitize settings before saving.
+	 *
+	 * @param mixed $input Raw input (may be array, null, or other type).
+	 *
+	 * @return array Sanitized input.
+	 */
+	public function sanitize_settings( $input ): array {
+		error_log( 'OAuth Login DEBUG: sanitize_settings called with input type: ' . gettype( $input ) );
+		
+		// Handle cases where WordPress passes null or non-array input.
+		if ( ! is_array( $input ) ) {
+			error_log( 'OAuth Login: sanitize_settings received non-array input: ' . gettype( $input ) );
+			// Return empty array - cannot call get_option here as it causes infinite recursion.
+			return [];
+		}
+
+		error_log( 'OAuth Login DEBUG: Input keys: ' . implode( ', ', array_keys( $input ) ) );
+
+		try {
+			// NOTE: Legacy settings handling removed from here to prevent infinite recursion.
+			// Legacy settings (wp_google_login_settings) are now handled by a separate sanitize callback.
+
+			$sanitized = [
+				'version'        => '2.1.10',
+				'providers'      => [],
+				'provider_order' => [],
+			];
+
+			// Sanitize provider settings.
+			if ( isset( $input['providers'] ) && is_array( $input['providers'] ) ) {
+				error_log( 'OAuth Login DEBUG: Processing ' . count( $input['providers'] ) . ' providers' );
+				foreach ( $input['providers'] as $provider_id => $settings ) {
+					$provider_id = sanitize_key( $provider_id );
+					error_log( 'OAuth Login DEBUG: Sanitizing provider: ' . $provider_id );
+
+					// Skip if marked for deletion.
+					if ( ! empty( $settings['delete'] ) ) {
+						error_log( 'OAuth Login DEBUG: Skipping deleted provider: ' . $provider_id );
+						continue;
+					}
+
+					$sanitized['providers'][ $provider_id ] = $this->sanitize_provider( $settings );
+					error_log( 'OAuth Login DEBUG: Successfully sanitized provider: ' . $provider_id );
+				}
+			}
+
+			// Handle new provider addition.
+			if ( isset( $input['new_provider'] ) && ! empty( $input['new_provider']['slug'] ) ) {
+				$new_slug = sanitize_key( $input['new_provider']['slug'] );
+
+				if ( ! empty( $new_slug ) && ! isset( $sanitized['providers'][ $new_slug ] ) ) {
+					$sanitized['providers'][ $new_slug ] = $this->sanitize_provider( $input['new_provider'] );
+				}
+			}
+
+			// Sanitize provider order.
+			if ( ! empty( $input['provider_order'] ) ) {
+				error_log( 'OAuth Login DEBUG: Sanitizing provider order' );
+				$order = is_array( $input['provider_order'] )
+					? $input['provider_order']
+					: array_filter( array_map( 'trim', explode( ',', $input['provider_order'] ) ) );
+
+				$sanitized['provider_order'] = array_map( 'sanitize_key', $order );
+			} else {
+				$sanitized['provider_order'] = array_keys( $sanitized['providers'] );
+			}
+
+			error_log( 'OAuth Login DEBUG: sanitize_settings completed successfully' );
+			return $sanitized;
+		} catch ( \Exception $e ) {
+			// Log the error and return empty array to prevent data loss.
+			error_log( 'OAuth Login ERROR: Settings sanitization exception - ' . $e->getMessage() );
+			error_log( 'OAuth Login ERROR: Exception in file ' . $e->getFile() . ' on line ' . $e->getLine() );
+			error_log( 'OAuth Login ERROR: Stack trace - ' . $e->getTraceAsString() );
+			
+			// Return empty array - cannot call get_option here as it causes infinite recursion.
+			return [];
+		}
 	}
 
 	/**
@@ -972,12 +1010,23 @@ class Settings implements ModuleInterface {
 	 * @return array Sanitized provider data.
 	 */
 	private function sanitize_provider( array $provider ): array {
+		error_log( 'OAuth Login DEBUG: sanitize_provider start for type: ' . ( $provider['type'] ?? 'unknown' ) );
+		
 		// Client secret needs special handling - don't use sanitize_text_field as it corrupts the secret.
 		$client_secret = $provider['client_secret'] ?? '';
-		if ( is_string( $client_secret ) ) {
+		error_log( 'OAuth Login DEBUG: Client secret length: ' . strlen( $client_secret ) );
+		
+		// Safely handle slashing - wp_unslash may not always be available.
+		if ( is_string( $client_secret ) && function_exists( 'wp_unslash' ) ) {
 			$client_secret = wp_unslash( $client_secret );
+		} elseif ( is_string( $client_secret ) ) {
+			// Fallback: manually remove slashes if wp_unslash doesn't exist.
+			$client_secret = stripslashes( $client_secret );
+		} else {
+			$client_secret = '';
 		}
 
+		error_log( 'OAuth Login DEBUG: Building sanitized array' );
 		$sanitized = [
 			'type'          => sanitize_key( $provider['type'] ?? 'custom' ),
 			'name'          => sanitize_text_field( $provider['name'] ?? '' ),
@@ -989,14 +1038,21 @@ class Settings implements ModuleInterface {
 			'button_styles' => $this->sanitize_button_styles( $provider['button_styles'] ?? [] ),
 		];
 
+		error_log( 'OAuth Login DEBUG: Base fields sanitized' );
+
 		// Custom provider fields.
 		if ( 'google' !== ( $provider['type'] ?? 'custom' ) ) {
+			error_log( 'OAuth Login DEBUG: Sanitizing custom provider URLs' );
 			$sanitized['authorize_url']  = $this->sanitize_external_url( $provider['authorize_url'] ?? '' );
+			error_log( 'OAuth Login DEBUG: authorize_url done' );
 			$sanitized['token_url']      = $this->sanitize_external_url( $provider['token_url'] ?? '' );
+			error_log( 'OAuth Login DEBUG: token_url done' );
 			$sanitized['user_info_url']  = $this->sanitize_external_url( $provider['user_info_url'] ?? '' );
+			error_log( 'OAuth Login DEBUG: user_info_url done' );
 			$sanitized['scopes']         = sanitize_text_field( $provider['scopes'] ?? '' );
 			$sanitized['callback_url']   = esc_url_raw( $provider['callback_url'] ?? '' );
 			$sanitized['field_mappings'] = $this->sanitize_field_mappings( $provider['field_mappings'] ?? [] );
+			error_log( 'OAuth Login DEBUG: Custom provider fields done' );
 		}
 
 		return $sanitized;
@@ -1117,18 +1173,19 @@ class Settings implements ModuleInterface {
 			return '';
 		}
 
-		$host = $parsed['host'];
+		$host = strtolower( $parsed['host'] );
 
 		// Reject localhost and common loopback names.
 		$blocked_hosts = [ 'localhost', '127.0.0.1', '0.0.0.0', '::1', '[::1]' ];
-		if ( in_array( strtolower( $host ), $blocked_hosts, true ) ) {
+		if ( in_array( $host, $blocked_hosts, true ) ) {
 			return '';
 		}
 
-		// Resolve hostname and reject private/reserved IP ranges.
-		$ip = gethostbyname( $host );
-		if ( $ip !== $host ) {
-			if ( ! filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) ) {
+		// Reject IP addresses in private/reserved ranges (without DNS lookup to avoid blocking).
+		// Note: This does not prevent hostnames that resolve to private IPs, but avoids
+		// the performance/timeout issues of DNS lookups during form submission.
+		if ( filter_var( $host, FILTER_VALIDATE_IP ) ) {
+			if ( ! filter_var( $host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) ) {
 				return '';
 			}
 		}
@@ -1161,16 +1218,28 @@ class Settings implements ModuleInterface {
 			return $value;
 		}
 
-		$key = hash( 'sha256', wp_salt( 'auth' ), true );
-		$iv  = substr( hash( 'sha256', wp_salt( 'secure_auth' ), true ), 0, 16 );
+		try {
+			$key = hash( 'sha256', wp_salt( 'auth' ), true );
+			$iv  = substr( hash( 'sha256', wp_salt( 'secure_auth' ), true ), 0, 16 );
 
-		$encrypted = openssl_encrypt( $value, 'aes-256-cbc', $key, 0, $iv );
+			$encrypted = openssl_encrypt( $value, 'aes-256-cbc', $key, 0, $iv );
 
-		if ( false === $encrypted ) {
+			if ( false === $encrypted ) {
+				// Log the error if WP_DEBUG is enabled.
+				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+					error_log( 'OAuth Login: Failed to encrypt client secret' );
+				}
+				return $value;
+			}
+
+			return 'enc:' . base64_encode( $encrypted ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+		} catch ( \Exception $e ) {
+			// Catch any encryption errors and return the raw value.
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'OAuth Login: Encryption error - ' . $e->getMessage() );
+			}
 			return $value;
 		}
-
-		return 'enc:' . base64_encode( $encrypted ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
 	}
 
 	/**
