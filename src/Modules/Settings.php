@@ -922,7 +922,7 @@ class Settings implements ModuleInterface {
 		}
 
 		$sanitized = [
-			'version'        => '2.1.3',
+			'version'        => '2.1.4',
 			'providers'      => [],
 			'provider_order' => [],
 		];
@@ -972,12 +972,18 @@ class Settings implements ModuleInterface {
 	 * @return array Sanitized provider data.
 	 */
 	private function sanitize_provider( array $provider ): array {
+		// Client secret needs special handling - don't use sanitize_text_field as it corrupts the secret.
+		$client_secret = $provider['client_secret'] ?? '';
+		if ( is_string( $client_secret ) ) {
+			$client_secret = wp_unslash( $client_secret );
+		}
+
 		$sanitized = [
 			'type'          => sanitize_key( $provider['type'] ?? 'custom' ),
 			'name'          => sanitize_text_field( $provider['name'] ?? '' ),
 			'enabled'       => ! empty( $provider['enabled'] ),
 			'client_id'     => sanitize_text_field( $provider['client_id'] ?? '' ),
-			'client_secret' => $this->encrypt_secret( sanitize_text_field( $provider['client_secret'] ?? '' ) ),
+			'client_secret' => $this->encrypt_secret( $client_secret ),
 			'button_text'   => sanitize_text_field( $provider['button_text'] ?? '' ),
 			'button_icon'   => esc_url_raw( $provider['button_icon'] ?? '' ),
 			'button_styles' => $this->sanitize_button_styles( $provider['button_styles'] ?? [] ),
