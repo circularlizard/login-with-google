@@ -929,42 +929,33 @@ class Settings implements ModuleInterface {
 	 * @return array Sanitized input.
 	 */
 	public function sanitize_settings( $input ): array {
-		error_log( 'OAuth Login DEBUG: sanitize_settings called with input type: ' . gettype( $input ) );
-		
 		// Handle cases where WordPress passes null or non-array input.
 		if ( ! is_array( $input ) ) {
-			error_log( 'OAuth Login: sanitize_settings received non-array input: ' . gettype( $input ) );
 			// Return empty array - cannot call get_option here as it causes infinite recursion.
 			return [];
 		}
-
-		error_log( 'OAuth Login DEBUG: Input keys: ' . implode( ', ', array_keys( $input ) ) );
 
 		try {
 			// NOTE: Legacy settings handling removed from here to prevent infinite recursion.
 			// Legacy settings (wp_google_login_settings) are now handled by a separate sanitize callback.
 
 			$sanitized = [
-				'version'        => '2.1.10',
+				'version'        => '2.2.0',
 				'providers'      => [],
 				'provider_order' => [],
 			];
 
 			// Sanitize provider settings.
 			if ( isset( $input['providers'] ) && is_array( $input['providers'] ) ) {
-				error_log( 'OAuth Login DEBUG: Processing ' . count( $input['providers'] ) . ' providers' );
 				foreach ( $input['providers'] as $provider_id => $settings ) {
 					$provider_id = sanitize_key( $provider_id );
-					error_log( 'OAuth Login DEBUG: Sanitizing provider: ' . $provider_id );
 
 					// Skip if marked for deletion.
 					if ( ! empty( $settings['delete'] ) ) {
-						error_log( 'OAuth Login DEBUG: Skipping deleted provider: ' . $provider_id );
 						continue;
 					}
 
 					$sanitized['providers'][ $provider_id ] = $this->sanitize_provider( $settings );
-					error_log( 'OAuth Login DEBUG: Successfully sanitized provider: ' . $provider_id );
 				}
 			}
 
@@ -979,7 +970,6 @@ class Settings implements ModuleInterface {
 
 			// Sanitize provider order.
 			if ( ! empty( $input['provider_order'] ) ) {
-				error_log( 'OAuth Login DEBUG: Sanitizing provider order' );
 				$order = is_array( $input['provider_order'] )
 					? $input['provider_order']
 					: array_filter( array_map( 'trim', explode( ',', $input['provider_order'] ) ) );
@@ -989,7 +979,6 @@ class Settings implements ModuleInterface {
 				$sanitized['provider_order'] = array_keys( $sanitized['providers'] );
 			}
 
-			error_log( 'OAuth Login DEBUG: sanitize_settings completed successfully' );
 			return $sanitized;
 		} catch ( \Exception $e ) {
 			// Log the error and return empty array to prevent data loss.
@@ -1010,11 +999,8 @@ class Settings implements ModuleInterface {
 	 * @return array Sanitized provider data.
 	 */
 	private function sanitize_provider( array $provider ): array {
-		error_log( 'OAuth Login DEBUG: sanitize_provider start for type: ' . ( $provider['type'] ?? 'unknown' ) );
-		
 		// Client secret needs special handling - don't use sanitize_text_field as it corrupts the secret.
 		$client_secret = $provider['client_secret'] ?? '';
-		error_log( 'OAuth Login DEBUG: Client secret length: ' . strlen( $client_secret ) );
 		
 		// Safely handle slashing - wp_unslash may not always be available.
 		if ( is_string( $client_secret ) && function_exists( 'wp_unslash' ) ) {
@@ -1026,7 +1012,6 @@ class Settings implements ModuleInterface {
 			$client_secret = '';
 		}
 
-		error_log( 'OAuth Login DEBUG: Building sanitized array' );
 		$sanitized = [
 			'type'          => sanitize_key( $provider['type'] ?? 'custom' ),
 			'name'          => sanitize_text_field( $provider['name'] ?? '' ),
@@ -1038,21 +1023,14 @@ class Settings implements ModuleInterface {
 			'button_styles' => $this->sanitize_button_styles( $provider['button_styles'] ?? [] ),
 		];
 
-		error_log( 'OAuth Login DEBUG: Base fields sanitized' );
-
 		// Custom provider fields.
 		if ( 'google' !== ( $provider['type'] ?? 'custom' ) ) {
-			error_log( 'OAuth Login DEBUG: Sanitizing custom provider URLs' );
 			$sanitized['authorize_url']  = $this->sanitize_external_url( $provider['authorize_url'] ?? '' );
-			error_log( 'OAuth Login DEBUG: authorize_url done' );
 			$sanitized['token_url']      = $this->sanitize_external_url( $provider['token_url'] ?? '' );
-			error_log( 'OAuth Login DEBUG: token_url done' );
 			$sanitized['user_info_url']  = $this->sanitize_external_url( $provider['user_info_url'] ?? '' );
-			error_log( 'OAuth Login DEBUG: user_info_url done' );
 			$sanitized['scopes']         = sanitize_text_field( $provider['scopes'] ?? '' );
 			$sanitized['callback_url']   = esc_url_raw( $provider['callback_url'] ?? '' );
 			$sanitized['field_mappings'] = $this->sanitize_field_mappings( $provider['field_mappings'] ?? [] );
-			error_log( 'OAuth Login DEBUG: Custom provider fields done' );
 		}
 
 		return $sanitized;
