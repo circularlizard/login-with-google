@@ -133,6 +133,7 @@ class Login implements ModuleInterface {
 		 */
 		add_filter( 'rtcamp.google_redirect_url', [ $this, 'redirect_url' ] );
 		add_filter( 'rtcamp.google_login_state', [ $this, 'state_redirect' ] );
+		add_filter( 'oauth.login_state', [ $this, 'state_redirect' ] );
 	}
 
 	/**

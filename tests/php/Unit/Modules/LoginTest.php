@@ -80,6 +80,7 @@ class LoginTest extends TestCase {
 		WP_Mock::expectActionAdded( 'wp_login', [ $this->testee, 'login_redirect' ] );
 		WP_Mock::expectFilterAdded( 'rtcamp.google_redirect_url', [ $this->testee, 'redirect_url' ] );
 		WP_Mock::expectFilterAdded( 'rtcamp.google_login_state', [ $this->testee, 'state_redirect' ] );
+		WP_Mock::expectFilterAdded( 'oauth.login_state', [ $this->testee, 'state_redirect' ] );
 
 		$this->testee->init();
 		$this->assertConditionsMet();
