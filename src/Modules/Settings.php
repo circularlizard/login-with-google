@@ -940,7 +940,7 @@ class Settings implements ModuleInterface {
 			// Legacy settings (wp_google_login_settings) are now handled by a separate sanitize callback.
 
 			$sanitized = [
-				'version'        => '2.2.0',
+				'version'        => '2.2.1',
 				'providers'      => [],
 				'provider_order' => [],
 			];
