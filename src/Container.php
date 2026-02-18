@@ -248,7 +248,7 @@ class Container implements ContainerInterface {
 		 *
 		 * @return ProviderRegistry
 		 */
-		$this->container['provider_registry'] = function ( PimpleContainer $c ) {
+		$this->container['provider_registry'] = function ( PimpleContainer $c ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 			$registry          = new ProviderRegistry();
 			$provider_settings = get_option( 'wp_oauth_login_settings', [] );
 			$providers         = $provider_settings['providers'] ?? [];

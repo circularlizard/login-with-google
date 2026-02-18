@@ -981,11 +981,6 @@ class Settings implements ModuleInterface {
 
 			return $sanitized;
 		} catch ( \Exception $e ) {
-			// Log the error and return empty array to prevent data loss.
-			error_log( 'OAuth Login ERROR: Settings sanitization exception - ' . $e->getMessage() );
-			error_log( 'OAuth Login ERROR: Exception in file ' . $e->getFile() . ' on line ' . $e->getLine() );
-			error_log( 'OAuth Login ERROR: Stack trace - ' . $e->getTraceAsString() );
-			
 			// Return empty array - cannot call get_option here as it causes infinite recursion.
 			return [];
 		}
@@ -1203,19 +1198,12 @@ class Settings implements ModuleInterface {
 			$encrypted = openssl_encrypt( $value, 'aes-256-cbc', $key, 0, $iv );
 
 			if ( false === $encrypted ) {
-				// Log the error if WP_DEBUG is enabled.
-				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-					error_log( 'OAuth Login: Failed to encrypt client secret' );
-				}
 				return $value;
 			}
 
 			return 'enc:' . base64_encode( $encrypted ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
 		} catch ( \Exception $e ) {
 			// Catch any encryption errors and return the raw value.
-			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-				error_log( 'OAuth Login: Encryption error - ' . $e->getMessage() );
-			}
 			return $value;
 		}
 	}

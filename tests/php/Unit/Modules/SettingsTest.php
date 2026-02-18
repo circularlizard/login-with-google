@@ -235,13 +235,12 @@ class SettingsTest extends TestCase {
 			]
 		);
 
-		// Now expects both settings groups.
 		$this->wpMockFunction(
 			'settings_fields',
 			[
 				'wp_oauth_login',
-				'times' => 1,
-			]
+			],
+			1
 		);
 
 		$this->wpMockFunction(
@@ -460,6 +459,15 @@ class SettingsTest extends TestCase {
 		);
 
 		WP_Mock::userFunction(
+			'wp_parse_url',
+			[
+				'return' => function( $url ) {
+					return parse_url( $url );
+				},
+			]
+		);
+
+		WP_Mock::userFunction(
 			'wp_salt',
 			[
 				'return' => 'test-salt-key',
@@ -467,7 +475,7 @@ class SettingsTest extends TestCase {
 		);
 
 		$input = [
-			'custom_providers' => [
+			'providers' => [
 				'github' => [
 					'name'          => 'GitHub',
 					'authorize_url' => 'https://github.com/login/oauth/authorize',
@@ -477,6 +485,8 @@ class SettingsTest extends TestCase {
 					'client_id'     => 'github-client-id',
 					'client_secret' => 'github-secret',
 				],
+			],
+			'new_provider' => [
 			],
 			'new_provider' => [
 				'slug'          => 'facebook',
@@ -492,14 +502,14 @@ class SettingsTest extends TestCase {
 
 		$result = $this->testee->sanitize_settings( $input );
 
-		// Check existing custom provider.
-		$this->assertArrayHasKey( 'github', $result['custom_providers'] );
-		$this->assertEquals( 'GitHub', $result['custom_providers']['github']['name'] );
-		$this->assertEquals( 'https://github.com/login/oauth/authorize', $result['custom_providers']['github']['authorize_url'] );
+		// Check existing provider.
+		$this->assertArrayHasKey( 'github', $result['providers'] );
+		$this->assertEquals( 'GitHub', $result['providers']['github']['name'] );
+		$this->assertEquals( 'https://github.com/login/oauth/authorize', $result['providers']['github']['authorize_url'] );
 
 		// Check new provider was added.
-		$this->assertArrayHasKey( 'facebook', $result['custom_providers'] );
-		$this->assertEquals( 'Facebook', $result['custom_providers']['facebook']['name'] );
+		$this->assertArrayHasKey( 'facebook', $result['providers'] );
+		$this->assertEquals( 'Facebook', $result['providers']['facebook']['name'] );
 	}
 
 	/**
@@ -521,6 +531,13 @@ class SettingsTest extends TestCase {
 		);
 
 		WP_Mock::userFunction(
+			'wp_unslash',
+			[
+				'return_arg' => 0,
+			]
+		);
+
+		WP_Mock::userFunction(
 			'esc_url_raw',
 			[
 				'return_arg' => 0,
@@ -528,7 +545,7 @@ class SettingsTest extends TestCase {
 		);
 
 		$input = [
-			'custom_providers' => [
+			'providers' => [
 				'github' => [
 					'name'   => 'GitHub',
 					'delete' => '1',
@@ -542,9 +559,9 @@ class SettingsTest extends TestCase {
 		$result = $this->testee->sanitize_settings( $input );
 
 		// GitHub should be deleted.
-		$this->assertArrayNotHasKey( 'github', $result['custom_providers'] ?? [] );
+		$this->assertArrayNotHasKey( 'github', $result['providers'] ?? [] );
 		// Facebook should remain.
-		$this->assertArrayHasKey( 'facebook', $result['custom_providers'] );
+		$this->assertArrayHasKey( 'facebook', $result['providers'] );
 	}
 
 	/**

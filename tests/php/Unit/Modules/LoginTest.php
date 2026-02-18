@@ -207,6 +207,16 @@ class LoginTest extends TestCase {
 			]
 		)->andReturn( $state );
 
+		$this->wpMockFunction(
+			'wp_verify_nonce',
+			[
+				'1234',
+				'oauth_login_some_other',
+			],
+			1,
+			false
+		);
+
 		$wp_user_mock        = new \stdClass();
 		$wp_user_mock->login = 'test';
 		$wp_user_mock->email = 'test@unit.com';
@@ -272,7 +282,7 @@ class LoginTest extends TestCase {
 			'wp_verify_nonce',
 			[
 				'testnonce',
-				'login_with_google',
+				'oauth_login_google',
 			],
 			1,
 			true
@@ -331,7 +341,7 @@ class LoginTest extends TestCase {
 			'wp_verify_nonce',
 			[
 				'testnonce',
-				'login_with_google',
+				'oauth_login_google',
 			],
 			1,
 			true
@@ -355,6 +365,15 @@ class LoginTest extends TestCase {
 	public function testUserMeta() {
 		$user = new \stdClass();
 		$user->login = 'login';
+
+		$helperMock = Mockery::mock( 'alias:' . Helper::class );
+		$helperMock->expects( 'filter_input' )->once()->withArgs(
+			[
+				INPUT_GET,
+				'state',
+				FILTER_SANITIZE_FULL_SPECIAL_CHARS
+			]
+		)->andReturn( null );
 
 		$this->wpMockFunction(
 			'add_user_meta',

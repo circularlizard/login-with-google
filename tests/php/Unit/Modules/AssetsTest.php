@@ -76,7 +76,7 @@ class AssetsTest extends TestCase {
 			'wp_register_style',
 			[
 				'oauth-login',
-				'https://example.com/assets/build/css/button/style.css',
+				'https://example.com/assets/build/css/button/style-2.2.0.css',
 				[],
 				false,
 				'all',
@@ -235,7 +235,7 @@ class AssetsTest extends TestCase {
 			'wp_register_style',
 			[
 				'oauth-login',
-				'https://example.com/assets/build/css/button/style.css',
+				'https://example.com/assets/build/css/button/style-2.2.0.css',
 				[],
 				false,
 				'all',

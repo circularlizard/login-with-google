@@ -55,7 +55,7 @@ class LoginButtonRenderer {
 	 *
 	 * @return string HTML output.
 	 */
-	public function render( bool $echo = true ): string {
+	public function render( bool $echo = true ): string { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.echoFound
 		$providers = $this->get_ordered_enabled_providers();
 
 		if ( empty( $providers ) ) {
