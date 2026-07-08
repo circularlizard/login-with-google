@@ -76,6 +76,7 @@ class Plugin {
 		'one_tap_login',
 		'google_login_block',
 		'provider_test_login',
+		'oidc_first_login',
 	];
 
 	/**
