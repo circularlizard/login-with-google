@@ -317,6 +317,15 @@ class Container implements ContainerInterface {
 		};
 
 		/**
+		 * OIDC-First Login customization module.
+		 *
+		 * @return Modules\OidcFirstLogin
+		 */
+		$this->container['oidc_first_login'] = function () {
+			return new Modules\OidcFirstLogin();
+		};
+
+		/**
 		 * Define any additional services.
 		 *
 		 * @param ContainerInterface $container Container object.
