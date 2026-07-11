@@ -136,16 +136,17 @@ class OidcFirstLogin implements ModuleInterface {
 
 		$help_html = '
 		<div class="notice notice-info">
-			<h2>Authorized Login</h2>
-			<p>Please use your corporate Single Sign-On profile to log in. You do not need to register a separate site password.</p>
+			<h2>Use OSM to Login</h2>
+			<p>Click the button below to be redirected to OSM to log in. Use your normal OSM login credentials, and then you will be redirected back to this website.</p>
 
 			<ul>
-				<li>Authentication is restricted to official email domains.</li>
-				<li>Verify that you are currently logged into your workplace profile.</li>
+				<li>If you have forgotten your OSM login details, you can reset your password on the OSM website.</li>
+				<li>If you are an Explorer, your parent/carer will need to add your email address to your record in OSM before you can log in.</li>
+				<li>SEEE does not gain access to your OSM account, your login credentials remain on the OSM site only.</li>
 			</ul>
 
 			<p>
-				Encountering errors? Reach out to IT Operations: <a href="mailto:support@yourcompany.com">support@yourcompany.com</a>
+				Encountering errors? First check that your OSM account is active. For issues with this site contact us at <a href="mailto:expeditions@sesscouts.org.uk">expeditions@sesscouts.org.uk</a>
 			</p>
 		</div>';
 
