@@ -124,15 +124,14 @@ class Login implements ModuleInterface {
 		add_action( 'login_footer', array( $this, 'login_button' ) );
 		// Priority is 20 because of issue: https://core.trac.wordpress.org/ticket/46748.
 		add_action( 'authenticate', array( $this, 'authenticate' ), 20 );
-		add_action( 'rtcamp.google_register_user', array( $this->authenticator, 'register' ) );
-		add_action( 'rtcamp.google_user_created', array( $this, 'user_meta' ) );
+		add_action( 'oauth.login_register_user', array( $this->authenticator, 'register' ) );
+		add_action( 'oauth.login_user_created', array( $this, 'user_meta' ) );
 		add_action( 'wp_login', array( $this, 'login_redirect' ) );
 
 		/**
 		 * Filters.
 		 */
-		add_filter( 'rtcamp.google_redirect_url', array( $this, 'redirect_url' ) );
-		add_filter( 'rtcamp.google_login_state', array( $this, 'state_redirect' ) );
+		add_filter( 'oauth.login_redirect_url', array( $this, 'redirect_url' ) );
 		add_filter( 'oauth.login_state', array( $this, 'state_redirect' ) );
 	}
 
@@ -249,7 +248,7 @@ class Login implements ModuleInterface {
 				 *
 				 * @param WP_User $user WP User object.
 				 */
-				do_action( 'rtcamp.google_user_authenticated', $user );
+				do_action( 'oauth.login_user_authenticated', $user );
 
 				return $user;
 			}
@@ -284,7 +283,7 @@ class Login implements ModuleInterface {
 
 		try {
 			// Exchange code for access token.
-			$token_response = wp_remote_post(
+			$token_response = wp_safe_remote_post(
 				$provider->get_token_url(),
 				array(
 					'headers' => array( 'Accept' => 'application/json' ),
@@ -310,7 +309,7 @@ class Login implements ModuleInterface {
 			}
 
 			// Fetch user info.
-			$user_response = wp_remote_get( // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.wp_remote_get_wp_remote_get
+			$user_response = wp_safe_remote_get(
 				$provider->get_user_info_url(),
 				array(
 					'headers' => array(
@@ -340,7 +339,7 @@ class Login implements ModuleInterface {
 				 * @param string  $provider_id Provider ID.
 				 */
 				do_action( 'oauth_login_user_authenticated', $user, $provider_id );
-				do_action( 'rtcamp.google_user_authenticated', $user );
+				do_action( 'oauth.login_user_authenticated', $user );
 
 				return $user;
 			}
@@ -398,7 +397,7 @@ class Login implements ModuleInterface {
 		 *
 		 * @param string $admin_url Admin URL address.
 		 */
-		$state['redirect_to'] = $redirect_to ?? apply_filters( 'rtcamp.google_default_redirect', admin_url() );
+		$state['redirect_to'] = $redirect_to ?? apply_filters( 'oauth.login_default_redirect', admin_url() );
 
 		return $state;
 	}

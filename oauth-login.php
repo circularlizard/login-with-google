@@ -1,9 +1,9 @@
 <?php
 /**
- * Plugin Name: OAuth Login
+ * Plugin Name: Expedition Management System - OIDC Login
  * Description: Allow users to login/register via any OAuth 2.0 provider.
- * Version: 2.3.1
- * Author: Circularlizard
+ * Version: 2.3.3
+ * Author: SE Scotland DofE (David Strachan)
  * Author URI: https://github.com/circularlizard
  * Text Domain: oauth-login
  * Domain Path: /languages

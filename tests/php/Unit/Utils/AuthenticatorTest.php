@@ -138,7 +138,7 @@ class AuthenticatorTest extends TestCase {
 		           ->once()
 		           ->withArgs( ['test'] );
 
-		WP_Mock::onFilter( 'rtcamp.google_register_user' )->with( $user )->reply( $wp_user );
+		WP_Mock::onFilter( 'oauth.login_register_user' )->with( $user )->reply( $wp_user );
 
 		$this->testee->authenticate( $user );
 		$this->assertConditionsMet();
@@ -221,7 +221,7 @@ class AuthenticatorTest extends TestCase {
 			100
 		);
 
-		WP_Mock::expectAction( 'rtcamp.google_user_created', 100, $user );
+		WP_Mock::expectAction( 'oauth.login_user_created', 100, $user );
 
 		$wp_user = Mockery::mock( \WP_User::class );
 
@@ -283,7 +283,7 @@ class AuthenticatorTest extends TestCase {
 			100
 		);
 
-		WP_Mock::expectAction( 'rtcamp.google_user_created', 100, $user );
+		WP_Mock::expectAction( 'oauth.login_user_created', 100, $user );
 
 		$wp_user = Mockery::mock( \WP_User::class );
 
@@ -346,7 +346,7 @@ class AuthenticatorTest extends TestCase {
 			100
 		);
 
-		WP_Mock::expectAction( 'rtcamp.google_user_created', 100, $user );
+		WP_Mock::expectAction( 'oauth.login_user_created', 100, $user );
 
 		$wp_user = Mockery::mock( \WP_User::class );
 

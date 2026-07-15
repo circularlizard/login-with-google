@@ -13,3 +13,21 @@ if ( ! function_exists( 'apply_filters_deprecated' ) ) {
 		return $args[0] ?? [];
 	}
 }
+
+if ( ! function_exists( 'wp_safe_remote_get' ) ) {
+	function wp_safe_remote_get( $url, $args = null ) {
+		if ( func_num_args() > 1 ) {
+			return wp_remote_get( $url, $args );
+		}
+		return wp_remote_get( $url );
+	}
+}
+
+if ( ! function_exists( 'wp_safe_remote_post' ) ) {
+	function wp_safe_remote_post( $url, $args = null ) {
+		if ( func_num_args() > 1 ) {
+			return wp_remote_post( $url, $args );
+		}
+		return wp_remote_post( $url );
+	}
+}

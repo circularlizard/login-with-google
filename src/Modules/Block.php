@@ -155,7 +155,7 @@ class Block implements Module {
 		if (
 			$force_display ||
 			! is_user_logged_in() ||
-			apply_filters( 'rtcamp.google_login_button_display', false )
+			apply_filters( 'oauth.login_button_display', false )
 		) {
 			// Use multi-provider renderer if available.
 			if ( null !== $this->button_renderer ) {

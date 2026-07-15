@@ -106,7 +106,7 @@ class Plugin {
 		 *
 		 * @since 1.0.0
 		 */
-		$this->active_modules = apply_filters( 'rtcamp.google_login_modules', $this->active_modules );
+		$this->active_modules = apply_filters( 'oauth.login_modules', $this->active_modules );
 
 		$this->container()->define_services();
 		$this->activate_modules();
