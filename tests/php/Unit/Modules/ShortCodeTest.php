@@ -164,7 +164,7 @@ class ShortCodeTest extends TestCase {
 			false
 		);
 
-		WP_Mock::expectFilterAdded( 'rtcamp.google_redirect_url', [ $this->testee, 'redirect_url' ] );
+		WP_Mock::expectFilterAdded( 'oauth.login_redirect_url', [ $this->testee, 'redirect_url' ] );
 
 		$this->wpMockFunction(
 			'Circularlizard\OAuthLogin\plugin',

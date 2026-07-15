@@ -162,8 +162,7 @@ class TokenVerifier {
 			return (string) $cached_pk;
 		}
 
-		//phpcs:disable WordPressVIPMinimum.Functions.RestrictedFunctions.wp_remote_get_wp_remote_get
-		$certs = wp_remote_get( self::CERTS_URL );
+		$certs = wp_safe_remote_get( self::CERTS_URL );
 
 		if ( 200 !== wp_remote_retrieve_response_code( $certs ) ) {
 			return null;

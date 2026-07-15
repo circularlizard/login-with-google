@@ -123,7 +123,7 @@ class GoogleClient {
 	 * @return string
 	 */
 	public function gt_redirect_url(): string {
-		return apply_filters( 'rtcamp.google_redirect_url', $this->redirect_uri );
+		return apply_filters( 'oauth.login_redirect_url', $this->redirect_uri );
 	}
 
 	/**
@@ -144,7 +144,7 @@ class GoogleClient {
 				$plugin_scope,
 			),
 			'1.0.15',
-			'rtcamp.google_scope'
+			'oauth.login_scope'
 		);
 
 		/**
@@ -152,7 +152,7 @@ class GoogleClient {
 		 *
 		 * @param array $scope List of scopes.
 		 */
-		$scope = apply_filters( 'rtcamp.google_scope', $scope );
+		$scope = apply_filters( 'oauth.login_scope', $scope );
 
 		$client_args = array(
 			'client_id'     => $this->client_id,
@@ -170,7 +170,7 @@ class GoogleClient {
 		 *
 		 * @param array $client_args List of query arguments to send to Google OAuth.
 		 */
-		$client_args = apply_filters( 'rtcamp.google_client_args', $client_args );
+		$client_args = apply_filters( 'oauth.login_client_args', $client_args );
 
 		return self::AUTHORIZE_URL . '?' . http_build_query( $client_args );
 	}
@@ -184,7 +184,7 @@ class GoogleClient {
 	 * @throws Exception For access token errors.
 	 */
 	public function access_token( string $code ): \stdClass {
-		$response = wp_remote_post(
+		$response = wp_safe_remote_post(
 			self::TOKEN_URL,
 			array(
 				'headers' => array(
@@ -216,8 +216,7 @@ class GoogleClient {
 	 */
 	public function user(): \stdClass {
 		try {
-			//phpcs:disable WordPressVIPMinimum.Functions.RestrictedFunctions.wp_remote_get_wp_remote_get
-			$user = wp_remote_get(
+			$user = wp_safe_remote_get(
 				trailingslashit( self::API_BASE ) . 'oauth2/v2/userinfo?access_token=' . $this->access_token,
 				array(
 					'headers' => array(
@@ -245,7 +244,7 @@ class GoogleClient {
 	 */
 	public function state(): string {
 		$state_data['nonce']    = wp_create_nonce( 'login_with_google' );
-		$state_data             = apply_filters( 'rtcamp.google_login_state', $state_data );
+		$state_data             = apply_filters( 'oauth.login_state', $state_data );
 		$state_data['provider'] = 'google';
 
 		return base64_encode( wp_json_encode( $state_data ) );

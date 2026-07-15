@@ -131,7 +131,7 @@ class Shortcode implements ModuleInterface {
 
 		$this->redirect_uri = $attrs['redirect_to'];
 
-		add_filter( 'rtcamp.google_redirect_url', array( $this, 'redirect_url' ) );
+		add_filter( 'oauth.login_redirect_url', array( $this, 'redirect_url' ) );
 
 		Helper::set_redirect_state_filter( $this->redirect_uri );
 
@@ -139,7 +139,7 @@ class Shortcode implements ModuleInterface {
 
 		Helper::remove_redirect_state_filter();
 
-		remove_filter( 'rtcamp.google_redirect_url', array( $this, 'redirect_url' ) );
+		remove_filter( 'oauth.login_redirect_url', array( $this, 'redirect_url' ) );
 
 		// Use multi-provider renderer if available.
 		if ( null !== $this->button_renderer ) {

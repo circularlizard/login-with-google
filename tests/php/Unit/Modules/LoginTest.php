@@ -75,11 +75,10 @@ class LoginTest extends TestCase {
 	public function testInit() {
 		WP_Mock::expectActionAdded( 'login_footer', [ $this->testee, 'login_button' ] );
 		WP_Mock::expectActionAdded( 'authenticate', [ $this->testee, 'authenticate' ], 20 );
-		WP_Mock::expectActionAdded( 'rtcamp.google_register_user', [ $this->authenticatorMock, 'register' ] );
-		WP_Mock::expectActionAdded( 'rtcamp.google_user_created', [ $this->testee, 'user_meta' ] );
+		WP_Mock::expectActionAdded( 'oauth.login_register_user', [ $this->authenticatorMock, 'register' ] );
+		WP_Mock::expectActionAdded( 'oauth.login_user_created', [ $this->testee, 'user_meta' ] );
 		WP_Mock::expectActionAdded( 'wp_login', [ $this->testee, 'login_redirect' ] );
-		WP_Mock::expectFilterAdded( 'rtcamp.google_redirect_url', [ $this->testee, 'redirect_url' ] );
-		WP_Mock::expectFilterAdded( 'rtcamp.google_login_state', [ $this->testee, 'state_redirect' ] );
+		WP_Mock::expectFilterAdded( 'oauth.login_redirect_url', [ $this->testee, 'redirect_url' ] );
 		WP_Mock::expectFilterAdded( 'oauth.login_state', [ $this->testee, 'state_redirect' ] );
 
 		$this->testee->init();
@@ -462,7 +461,7 @@ class LoginTest extends TestCase {
 			'https://example.com/login'
 		);
 
-		WP_Mock::expectFilter( 'rtcamp.google_default_redirect', 'https://example.com/login' );
+		WP_Mock::expectFilter( 'oauth.login_default_redirect', 'https://example.com/login' );
 		$state_data = $this->testee->state_redirect( [] );
 		$this->assertIsArray( $state_data );
 		$this->assertContains( 'https://example.com/login', $state_data );

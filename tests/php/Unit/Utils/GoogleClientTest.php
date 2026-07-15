@@ -81,7 +81,7 @@ class GoogleClientTest extends TestCase {
 	 * @covers ::access_token
 	 */
 	public function testSetAccessToken() {
-		WP_Mock::expectFilter( 'rtcamp.google_redirect_url', '' );
+		WP_Mock::expectFilter( 'oauth.login_redirect_url', '' );
 
 		$this->wpMockFunction(
 			'wp_remote_post',
@@ -139,7 +139,7 @@ class GoogleClientTest extends TestCase {
 	 * @covers ::set_access_token
 	 */
 	public function testSetAccessTokenThrowsException() {
-		WP_Mock::expectFilter( 'rtcamp.google_redirect_url', '' );
+		WP_Mock::expectFilter( 'oauth.login_redirect_url', '' );
 
 		$this->wpMockFunction(
 			'wp_remote_post',
@@ -326,7 +326,7 @@ class GoogleClientTest extends TestCase {
 	 */
 	public function testAuthorizationURL() {
 		$scope = [ 'email', 'profile', 'openid' ];
-		WP_Mock::onFilter( 'rtcamp.google_scope' )->with( $scope )->reply( $scope );
+		WP_Mock::onFilter( 'oauth.login_scope' )->with( $scope )->reply( $scope );
 		$ghClient = $this->createPartialMock( Testee::class, [ 'gt_redirect_url', 'state' ] );
 		$ghClient->expects( $this->once() )->method( 'gt_redirect_url' )->willReturn( '' );
 		$ghClient->expects( $this->once() )->method( 'state' )->willReturn( 'abcd' );
@@ -341,7 +341,7 @@ class GoogleClientTest extends TestCase {
 			'response_type' => 'code',
 		];
 
-		WP_Mock::expectFilter( 'rtcamp.google_client_args', $client_args );
+		WP_Mock::expectFilter( 'oauth.login_client_args', $client_args );
 
 		$expected = 'https://accounts.google.com/o/oauth2/auth?client_id=cid&redirect_uri=&state=abcd&scope=email+profile+openid&access_type=online&response_type=code';
 

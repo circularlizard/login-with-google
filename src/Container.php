@@ -331,6 +331,6 @@ class Container implements ContainerInterface {
 		 *
 		 * @since 1.0.0
 		 */
-		do_action( 'rtcamp.google_login_services', $this );
+		do_action( 'oauth.login_services', $this );
 	}
 }

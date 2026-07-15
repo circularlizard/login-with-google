@@ -168,7 +168,7 @@ class ProviderTestLogin implements ModuleInterface {
 		}
 
 		// Exchange code for access token using the provider's real callback URL.
-		$token_response = wp_remote_post(
+		$token_response = wp_safe_remote_post(
 			$provider->get_token_url(),
 			array(
 				'headers' => array( 'Accept' => 'application/json' ),
@@ -198,7 +198,7 @@ class ProviderTestLogin implements ModuleInterface {
 		}
 
 		// Fetch user info.
-		$user_response = wp_remote_get( // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.wp_remote_get_wp_remote_get
+		$user_response = wp_safe_remote_get(
 			$provider->get_user_info_url(),
 			array(
 				'headers' => array(
@@ -313,8 +313,8 @@ class ProviderTestLogin implements ModuleInterface {
 
 				<script>
 				(function() {
-					var fields = <?php echo wp_json_encode( $fields ); ?>;
-					var providerId = <?php echo wp_json_encode( $provider_id ); ?>;
+					var fields = <?php echo wp_json_encode( $fields, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ); ?>;
+					var providerId = <?php echo wp_json_encode( $provider_id, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ); ?>;
 
 					document.querySelectorAll('.field-mapping-select').forEach(function(select) {
 						select.addEventListener('change', function() {

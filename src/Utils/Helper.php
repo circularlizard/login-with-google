@@ -232,7 +232,7 @@ class Helper {
 			}
 		}
 
-		return apply_filters( 'rtcamp.google_default_redirect', $default_redirect_url );
+		return apply_filters( 'oauth.login_default_redirect', $default_redirect_url );
 	}
 
 	/**
@@ -249,7 +249,7 @@ class Helper {
 
 		self::$redirection_url = $redirect_to;
 
-		add_filter( 'rtcamp.google_login_state', array( __CLASS__, 'update_redirect_state' ) );
+		add_filter( 'oauth.login_state', array( __CLASS__, 'update_redirect_state' ) );
 	}
 
 	/**
@@ -275,6 +275,6 @@ class Helper {
 	 * @return void
 	 */
 	public static function remove_redirect_state_filter() {
-		remove_filter( 'rtcamp.google_login_state', array( __CLASS__, 'update_redirect_state' ) );
+		remove_filter( 'oauth.login_state', array( __CLASS__, 'update_redirect_state' ) );
 	}
 }
