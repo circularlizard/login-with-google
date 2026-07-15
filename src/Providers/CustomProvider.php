@@ -38,7 +38,7 @@ class CustomProvider implements OAuthProvider {
 	public function __construct( array $config ) {
 		$this->config = wp_parse_args(
 			$config,
-			[
+			array(
 				'provider_id'    => '',
 				'name'           => '',
 				'authorize_url'  => '',
@@ -50,10 +50,10 @@ class CustomProvider implements OAuthProvider {
 				'callback_url'   => '',
 				'button_text'    => '',
 				'button_icon'    => '',
-				'button_styles'  => [],
-				'field_mappings' => [],
+				'button_styles'  => array(),
+				'field_mappings' => array(),
 				'enabled'        => true,
-			]
+			)
 		);
 	}
 
@@ -114,7 +114,7 @@ class CustomProvider implements OAuthProvider {
 			return array_filter( array_map( 'trim', explode( ',', $scopes ) ) );
 		}
 
-		return is_array( $scopes ) ? $scopes : [];
+		return is_array( $scopes ) ? $scopes : array();
 	}
 
 	/**
@@ -202,7 +202,7 @@ class CustomProvider implements OAuthProvider {
 	 * @return array Associative array of CSS properties.
 	 */
 	public function get_button_styles(): array {
-		$defaults = [
+		$defaults = array(
 			'background_color'       => '#ffffff',
 			'text_color'             => '#3d4145',
 			'border_color'           => '#ccced0',
@@ -213,9 +213,9 @@ class CustomProvider implements OAuthProvider {
 			'hover_background_color' => '#f7f7f7',
 			'hover_text_color'       => '#3d4145',
 			'hover_border_color'     => '#babcbe',
-		];
+		);
 
-		$styles = $this->config['button_styles'] ?? [];
+		$styles = $this->config['button_styles'] ?? array();
 
 		if ( is_array( $styles ) ) {
 			return wp_parse_args( $styles, $defaults );
@@ -230,15 +230,15 @@ class CustomProvider implements OAuthProvider {
 	 * @return array Associative array of field mappings.
 	 */
 	public function get_field_mappings(): array {
-		$defaults = [
+		$defaults = array(
 			'email'        => 'email',
 			'first_name'   => '',
 			'last_name'    => '',
 			'display_name' => '',
 			'avatar'       => '',
-		];
+		);
 
-		$mappings = $this->config['field_mappings'] ?? [];
+		$mappings = $this->config['field_mappings'] ?? array();
 
 		if ( is_array( $mappings ) ) {
 			return wp_parse_args( $mappings, $defaults );

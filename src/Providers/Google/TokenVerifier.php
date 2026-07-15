@@ -31,13 +31,13 @@ class TokenVerifier {
 	/**
 	 * List of supported algorithms.
 	 */
-	const SUPPORTED_ALGORITHMS = [
+	const SUPPORTED_ALGORITHMS = array(
 		'RS256' => OPENSSL_ALGO_SHA256,
 		'RS384' => OPENSSL_ALGO_SHA384,
 		'RS512' => OPENSSL_ALGO_SHA512,
 		'ES384' => OPENSSL_ALGO_SHA384,
 		'ES256' => OPENSSL_ALGO_SHA512,
-	];
+	);
 
 	/**
 	 * ID Token Sent via Google.
@@ -117,7 +117,7 @@ class TokenVerifier {
 	 * @return array|string|string[]
 	 */
 	public function base64_encode_url( $str ) {
-		return str_replace( [ '+', '/', '=' ], [ '-', '_', '' ], base64_encode( $str ) );
+		return str_replace( array( '+', '/', '=' ), array( '-', '_', '' ), base64_encode( $str ) );
 	}
 
 	/**
@@ -128,7 +128,7 @@ class TokenVerifier {
 	 * @return false|string
 	 */
 	public function base64_decode_url( string $str ) {
-		return base64_decode( str_replace( [ '-', '_' ], [ '+', '/' ], $str ) );
+		return base64_decode( str_replace( array( '-', '_' ), array( '+', '/' ), $str ) );
 	}
 
 	/**
@@ -214,11 +214,11 @@ class TokenVerifier {
 			throw new Exception( esc_html__( 'ID token is invalid', 'oauth-login' ) );
 		}
 
-		return [
+		return array(
 			$header,
 			$payload,
 			$obtained_signature,
-		];
+		);
 	}
 
 	/**
@@ -232,11 +232,11 @@ class TokenVerifier {
 		$parsed_header                                 = json_decode( $header );
 		$parsed_header                                 = wp_parse_args(
 			(array) $parsed_header,
-			[
+			array(
 				'kid' => null,
 				'alg' => null,
 				'typ' => 'JWT',
-			]
+			)
 		);
 
 		if ( ! $parsed_header['kid'] || ! $parsed_header['alg'] ) {
@@ -271,7 +271,7 @@ class TokenVerifier {
 			throw new Exception( esc_html__( 'Invalid data found for authentication', 'oauth-login' ) );
 		}
 
-		if ( ! in_array( $this->current_user->iss, [ 'accounts.google.com', 'https://accounts.google.com' ], true ) ) {
+		if ( ! in_array( $this->current_user->iss, array( 'accounts.google.com', 'https://accounts.google.com' ), true ) ) {
 			throw new Exception( esc_html__( 'Invalid source found for authentication', 'oauth-login' ) );
 		}
 

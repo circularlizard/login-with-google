@@ -136,19 +136,19 @@ class Container implements ContainerInterface {
 		 */
 		$this->container['gh_client'] = function ( PimpleContainer $c ) {
 			$settings          = $c['settings'];
-			$provider_settings = get_option( 'wp_oauth_login_settings', [] );
-			$google_config     = $provider_settings['providers']['google'] ?? [];
+			$provider_settings = get_option( 'wp_oauth_login_settings', array() );
+			$google_config     = $provider_settings['providers']['google'] ?? array();
 
 			// Prefer new provider settings, fall back to legacy settings.
 			$client_id     = ! empty( $google_config['client_id'] ) ? $google_config['client_id'] : ( $settings->client_id ?? '' );
 			$client_secret = ! empty( $google_config['client_secret'] ) ? Settings::decrypt_secret( $google_config['client_secret'] ) : ( $settings->client_secret ?? '' );
 
 			return new GoogleClient(
-				[
+				array(
 					'client_id'     => $client_id,
 					'client_secret' => $client_secret,
 					'redirect_uri'  => wp_login_url(),
-				]
+				)
 			);
 		};
 
@@ -240,7 +240,6 @@ class Container implements ContainerInterface {
 			return $block;
 		};
 
-
 		/**
 		 * Define Provider Registry service.
 		 *
@@ -250,8 +249,8 @@ class Container implements ContainerInterface {
 		 */
 		$this->container['provider_registry'] = function ( PimpleContainer $c ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 			$registry          = new ProviderRegistry();
-			$provider_settings = get_option( 'wp_oauth_login_settings', [] );
-			$providers         = $provider_settings['providers'] ?? [];
+			$provider_settings = get_option( 'wp_oauth_login_settings', array() );
+			$providers         = $provider_settings['providers'] ?? array();
 
 			foreach ( $providers as $provider_id => $config ) {
 				$type = $config['type'] ?? 'custom';
@@ -270,7 +269,7 @@ class Container implements ContainerInterface {
 					$registry->register( $google );
 				} else {
 					$custom = new CustomProvider(
-						array_merge( $decrypted_config, [ 'provider_id' => $provider_id ] )
+						array_merge( $decrypted_config, array( 'provider_id' => $provider_id ) )
 					);
 					$registry->register( $custom );
 				}
