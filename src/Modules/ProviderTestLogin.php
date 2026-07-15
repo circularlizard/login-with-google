@@ -56,12 +56,12 @@ class ProviderTestLogin implements ModuleInterface {
 	 * @return void
 	 */
 	public function init(): void {
-		add_action( 'wp_ajax_oauth_test_login_init', [ $this, 'handle_test_init' ] );
-		add_action( 'wp_ajax_oauth_test_save_mappings', [ $this, 'handle_save_mappings' ] );
+		add_action( 'wp_ajax_oauth_test_login_init', array( $this, 'handle_test_init' ) );
+		add_action( 'wp_ajax_oauth_test_save_mappings', array( $this, 'handle_save_mappings' ) );
 
 		// Intercept test login callbacks at the real callback URL (login page).
 		// Runs early (priority 1) so it fires before the normal authenticate filter.
-		add_action( 'login_init', [ $this, 'maybe_handle_test_callback' ], 1 );
+		add_action( 'login_init', array( $this, 'maybe_handle_test_callback' ), 1 );
 	}
 
 	/**
@@ -73,38 +73,38 @@ class ProviderTestLogin implements ModuleInterface {
 		check_ajax_referer( 'oauth_test_login', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( [ 'message' => __( 'Insufficient permissions.', 'oauth-login' ) ] );
+			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'oauth-login' ) ) );
 		}
 
 		$provider_id = sanitize_key( $_POST['provider_id'] ?? '' );
 
 		if ( empty( $provider_id ) || null === $this->registry ) {
-			wp_send_json_error( [ 'message' => __( 'Invalid provider.', 'oauth-login' ) ] );
+			wp_send_json_error( array( 'message' => __( 'Invalid provider.', 'oauth-login' ) ) );
 		}
 
 		$provider = $this->registry->get( $provider_id );
 
 		if ( null === $provider ) {
-			wp_send_json_error( [ 'message' => __( 'Provider not found in registry.', 'oauth-login' ) ] );
+			wp_send_json_error( array( 'message' => __( 'Provider not found in registry.', 'oauth-login' ) ) );
 		}
 
-		$state_data = [
+		$state_data = array(
 			'nonce'     => wp_create_nonce( 'oauth_test_' . $provider_id ),
 			'provider'  => $provider_id,
 			'test_mode' => true,
-		];
+		);
 
-		$args = [
+		$args = array(
 			'client_id'     => $provider->get_client_id(),
 			'redirect_uri'  => $provider->get_callback_url(),
 			'state'         => base64_encode( wp_json_encode( $state_data ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
 			'scope'         => implode( ' ', $provider->get_scopes() ),
 			'response_type' => 'code',
-		];
+		);
 
 		$auth_url = $provider->get_authorize_url() . '?' . http_build_query( $args );
 
-		wp_send_json_success( [ 'auth_url' => $auth_url ] );
+		wp_send_json_success( array( 'auth_url' => $auth_url ) );
 	}
 
 	/**
@@ -170,16 +170,16 @@ class ProviderTestLogin implements ModuleInterface {
 		// Exchange code for access token using the provider's real callback URL.
 		$token_response = wp_remote_post(
 			$provider->get_token_url(),
-			[
-				'headers' => [ 'Accept' => 'application/json' ],
-				'body'    => [
+			array(
+				'headers' => array( 'Accept' => 'application/json' ),
+				'body'    => array(
 					'client_id'     => $provider->get_client_id(),
 					'client_secret' => $provider->get_client_secret(),
 					'redirect_uri'  => $provider->get_callback_url(),
 					'code'          => $code,
 					'grant_type'    => 'authorization_code',
-				],
-			]
+				),
+			)
 		);
 
 		if ( is_wp_error( $token_response ) ) {
@@ -200,12 +200,12 @@ class ProviderTestLogin implements ModuleInterface {
 		// Fetch user info.
 		$user_response = wp_remote_get( // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.wp_remote_get_wp_remote_get
 			$provider->get_user_info_url(),
-			[
-				'headers' => [
+			array(
+				'headers' => array(
 					'Accept'        => 'application/json',
 					'Authorization' => 'Bearer ' . $token_data->access_token,
-				],
-			]
+				),
+			)
 		);
 
 		if ( is_wp_error( $user_response ) ) {
@@ -236,7 +236,7 @@ class ProviderTestLogin implements ModuleInterface {
 	 */
 	private function render_test_result( string $provider_id, $user_data, ?string $error ): void {
 		$json_pretty = $user_data ? wp_json_encode( $user_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) : '';
-		$fields      = $user_data ? $this->flatten_object( $user_data ) : [];
+		$fields      = $user_data ? $this->flatten_object( $user_data ) : array();
 		?>
 		<!DOCTYPE html>
 		<html>
@@ -280,13 +280,13 @@ class ProviderTestLogin implements ModuleInterface {
 					</thead>
 					<tbody>
 						<?php
-						$mapping_fields = [
+						$mapping_fields = array(
 							'email'        => __( 'Email', 'oauth-login' ),
 							'first_name'   => __( 'First Name', 'oauth-login' ),
 							'last_name'    => __( 'Last Name', 'oauth-login' ),
 							'display_name' => __( 'Display Name', 'oauth-login' ),
 							'avatar'       => __( 'Avatar URL', 'oauth-login' ),
-						];
+						);
 						foreach ( $mapping_fields as $field_key => $field_label ) :
 							?>
 							<tr>
@@ -362,30 +362,30 @@ class ProviderTestLogin implements ModuleInterface {
 		check_ajax_referer( 'oauth_test_login', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( [ 'message' => __( 'Insufficient permissions.', 'oauth-login' ) ] );
+			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'oauth-login' ) ) );
 		}
 
 		$provider_id  = sanitize_key( $_POST['provider_id'] ?? '' );
-		$raw_mappings = isset( $_POST['mappings'] ) ? array_map( 'sanitize_text_field', (array) wp_unslash( $_POST['mappings'] ) ) : [];
+		$raw_mappings = isset( $_POST['mappings'] ) ? array_map( 'sanitize_text_field', (array) wp_unslash( $_POST['mappings'] ) ) : array();
 
 		// Only allow known mapping keys.
-		$allowed_keys = [ 'email', 'first_name', 'last_name', 'display_name', 'avatar' ];
+		$allowed_keys = array( 'email', 'first_name', 'last_name', 'display_name', 'avatar' );
 		$mappings     = array_intersect_key( $raw_mappings, array_flip( $allowed_keys ) );
 
 		if ( empty( $provider_id ) ) {
-			wp_send_json_error( [ 'message' => __( 'Invalid provider.', 'oauth-login' ) ] );
+			wp_send_json_error( array( 'message' => __( 'Invalid provider.', 'oauth-login' ) ) );
 		}
 
-		$settings = get_option( 'wp_oauth_login_settings', [] );
+		$settings = get_option( 'wp_oauth_login_settings', array() );
 
 		if ( ! isset( $settings['providers'][ $provider_id ] ) ) {
-			wp_send_json_error( [ 'message' => __( 'Provider not found in settings.', 'oauth-login' ) ] );
+			wp_send_json_error( array( 'message' => __( 'Provider not found in settings.', 'oauth-login' ) ) );
 		}
 
 		$settings['providers'][ $provider_id ]['field_mappings'] = $mappings;
 		update_option( 'wp_oauth_login_settings', $settings );
 
-		wp_send_json_success( [ 'message' => __( 'Field mappings saved.', 'oauth-login' ) ] );
+		wp_send_json_success( array( 'message' => __( 'Field mappings saved.', 'oauth-login' ) ) );
 	}
 
 	/**
@@ -397,7 +397,7 @@ class ProviderTestLogin implements ModuleInterface {
 	 * @return array Associative array of path => value.
 	 */
 	private function flatten_object( $data, string $prefix = '' ): array {
-		$result = [];
+		$result = array();
 
 		if ( $data instanceof \stdClass ) {
 			$data = (array) $data;

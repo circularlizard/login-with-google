@@ -96,7 +96,7 @@ class Block implements Module {
 		/**
 		 * Actions.
 		 */
-		add_action( 'init', [ $this, 'register' ] );
+		add_action( 'init', array( $this, 'register' ) );
 
 		/**
 		 * Filters.
@@ -120,9 +120,9 @@ class Block implements Module {
 
 		register_block_type(
 			trailingslashit( plugin()->assets_dir ) . 'build/blocks/login-button',
-			[
-				'render_callback' => [ $this, 'render_login_button' ],
-			]
+			array(
+				'render_callback' => array( $this, 'render_login_button' ),
+			)
 		);
 	}
 
@@ -164,11 +164,11 @@ class Block implements Module {
 
 			// Fallback to legacy Google-only button.
 			$markup = $this->markup(
-				[
+				array(
 					'login_url'           => $this->client->authorization_url(),
 					'custom_btn_text'     => $attributes['buttonText'] ?? false,
 					'force_display_block' => $attributes['forceDisplay'] ?? false,
-				]
+				)
 			);
 
 			ob_start();
@@ -193,14 +193,14 @@ class Block implements Module {
 	 *
 	 * @return string
 	 */
-	private function markup( array $args = [] ): string {
+	private function markup( array $args = array() ): string {
 		$args = wp_parse_args(
 			$args,
-			[
+			array(
 				'login_url'       => '#',
 				'custom_btn_text' => '',
 				'forceDisplay'    => false,
-			]
+			)
 		);
 
 		$template = trailingslashit( plugin()->template_dir ) . 'google-login-button.php';

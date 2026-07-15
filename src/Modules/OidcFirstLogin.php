@@ -37,11 +37,11 @@ class OidcFirstLogin implements ModuleInterface {
 	 * @return void
 	 */
 	public function init(): void {
-		add_filter( 'login_body_class', [ $this, 'login_classes' ] );
-		add_action( 'login_head', [ $this, 'inject_styles' ] );
-		add_filter( 'login_message', [ $this, 'inject_help_text' ] );
+		add_filter( 'login_body_class', array( $this, 'login_classes' ) );
+		add_action( 'login_head', array( $this, 'inject_styles' ) );
+		add_filter( 'login_message', array( $this, 'inject_help_text' ) );
 		// Priority 20 ensures this runs after Login::login_button (priority 10).
-		add_action( 'login_footer', [ $this, 'add_backdoor_link' ], 20 );
+		add_action( 'login_footer', array( $this, 'add_backdoor_link' ), 20 );
 	}
 
 	/**

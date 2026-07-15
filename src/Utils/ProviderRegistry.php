@@ -26,7 +26,7 @@ class ProviderRegistry {
 	 *
 	 * @var array<string, OAuthProvider>
 	 */
-	private array $providers = [];
+	private array $providers = array();
 
 	/**
 	 * Register a provider.

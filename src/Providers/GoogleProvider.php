@@ -126,11 +126,11 @@ class GoogleProvider implements OAuthProvider {
 	 * @return array List of scope strings.
 	 */
 	public function get_scopes(): array {
-		return [
+		return array(
 			'email',
 			'profile',
 			'openid',
-		];
+		);
 	}
 
 	/**
@@ -205,7 +205,7 @@ class GoogleProvider implements OAuthProvider {
 	 * @return array Default Google button styles.
 	 */
 	public function get_button_styles(): array {
-		return [
+		return array(
 			'background_color'       => '#ffffff',
 			'text_color'             => '#3d4145',
 			'border_color'           => '#ccced0',
@@ -216,7 +216,7 @@ class GoogleProvider implements OAuthProvider {
 			'hover_background_color' => '#f7f7f7',
 			'hover_text_color'       => '#3d4145',
 			'hover_border_color'     => '#babcbe',
-		];
+		);
 	}
 
 	/**
@@ -225,12 +225,12 @@ class GoogleProvider implements OAuthProvider {
 	 * @return array Field mappings.
 	 */
 	public function get_field_mappings(): array {
-		return [
+		return array(
 			'email'        => 'email',
 			'first_name'   => 'given_name',
 			'last_name'    => 'family_name',
 			'display_name' => 'name',
 			'avatar'       => 'picture',
-		];
+		);
 	}
 }

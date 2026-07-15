@@ -41,7 +41,7 @@ class Settings implements ModuleInterface {
 	 *
 	 * @var array
 	 */
-	private array $provider_settings = [];
+	private array $provider_settings = array();
 
 	/**
 	 * Provider registry instance.
@@ -55,14 +55,14 @@ class Settings implements ModuleInterface {
 	 *
 	 * @var string[]
 	 */
-	private $getters = [
+	private $getters = array(
 		'WP_GOOGLE_LOGIN_CLIENT_ID'         => 'client_id',
 		'WP_GOOGLE_LOGIN_SECRET'            => 'client_secret',
 		'WP_GOOGLE_LOGIN_USER_REGISTRATION' => 'registration_enabled',
 		'WP_GOOGLE_LOGIN_WHITELIST_DOMAINS' => 'whitelisted_domains',
 		'WP_GOOGLE_ONE_TAP_LOGIN'           => 'one_tap_login',
 		'WP_GOOGLE_ONE_TAP_LOGIN_SCREEN'    => 'one_tap_login_screen',
-	];
+	);
 
 	/**
 	 * Set the provider registry.
@@ -114,16 +114,16 @@ class Settings implements ModuleInterface {
 	 * @return void
 	 */
 	public function init(): void {
-		$this->options           = get_option( 'wp_google_login_settings', [] );
-		$this->provider_settings = get_option( 'wp_oauth_login_settings', [] );
+		$this->options           = get_option( 'wp_google_login_settings', array() );
+		$this->provider_settings = get_option( 'wp_oauth_login_settings', array() );
 
 		/**
 		 * Actions.
 		 */
-		add_action( 'admin_init', [ $this, 'register_settings' ] );
-		add_action( 'admin_menu', [ $this, 'settings_page' ] );
-		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_scripts' ] );
-		add_filter( 'wp_redirect', [ $this, 'pass_reopen_panel_on_save' ] );
+		add_action( 'admin_init', array( $this, 'register_settings' ) );
+		add_action( 'admin_menu', array( $this, 'settings_page' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
+		add_filter( 'wp_redirect', array( $this, 'pass_reopen_panel_on_save' ) );
 
 		/**
 		 * Filters.
@@ -189,7 +189,7 @@ class Settings implements ModuleInterface {
 	 * @return array
 	 */
 	public function get_provider_settings( string $provider_id ): array {
-		return $this->provider_settings['providers'][ $provider_id ] ?? [];
+		return $this->provider_settings['providers'][ $provider_id ] ?? array();
 	}
 
 	/**
@@ -219,23 +219,23 @@ class Settings implements ModuleInterface {
 		register_setting(
 			'wp_google_login',
 			'wp_google_login_settings',
-			[
-				'sanitize_callback' => [ $this, 'sanitize_legacy_settings' ],
-			]
+			array(
+				'sanitize_callback' => array( $this, 'sanitize_legacy_settings' ),
+			)
 		);
 		register_setting(
 			'wp_oauth_login',
 			'wp_oauth_login_settings',
-			[
-				'sanitize_callback' => [ $this, 'sanitize_settings' ],
-			]
+			array(
+				'sanitize_callback' => array( $this, 'sanitize_settings' ),
+			)
 		);
 
 		// Providers section - shows the provider list table.
 		add_settings_section(
 			'wp_oauth_providers_section',
 			__( 'OAuth Providers', 'oauth-login' ),
-			[ $this, 'render_providers_section' ],
+			array( $this, 'render_providers_section' ),
 			'oauth-login'
 		);
 
@@ -251,19 +251,19 @@ class Settings implements ModuleInterface {
 		add_settings_field(
 			'wp_google_allow_registration',
 			__( 'Create New User', 'oauth-login' ),
-			[ $this, 'user_registration' ],
+			array( $this, 'user_registration' ),
 			'oauth-login',
 			'wp_oauth_general_section',
-			[ 'label_for' => 'user-registration' ]
+			array( 'label_for' => 'user-registration' )
 		);
 
 		add_settings_field(
 			'wp_google_whitelisted_domain',
 			__( 'Whitelisted Domains', 'oauth-login' ),
-			[ $this, 'whitelisted_domains' ],
+			array( $this, 'whitelisted_domains' ),
 			'oauth-login',
 			'wp_oauth_general_section',
-			[ 'label_for' => 'whitelisted-domains' ]
+			array( 'label_for' => 'whitelisted-domains' )
 		);
 
 		// Google One Tap section (Google-specific, only if Google is configured).
@@ -282,19 +282,19 @@ class Settings implements ModuleInterface {
 			add_settings_field(
 				'wp_google_one_tap_login',
 				__( 'Enable One Tap Login', 'oauth-login' ),
-				[ $this, 'one_tap_login' ],
+				array( $this, 'one_tap_login' ),
 				'oauth-login',
 				'wp_google_one_tap_section',
-				[ 'label_for' => 'one-tap-login' ]
+				array( 'label_for' => 'one-tap-login' )
 			);
 
 			add_settings_field(
 				'wp_google_one_tap_login_screen',
 				__( 'One Tap Login Locations', 'oauth-login' ),
-				[ $this, 'one_tap_login_screens' ],
+				array( $this, 'one_tap_login_screens' ),
 				'oauth-login',
 				'wp_google_one_tap_section',
-				[ 'label_for' => 'one-tap-login-screen' ]
+				array( 'label_for' => 'one-tap-login-screen' )
 			);
 		}
 	}
@@ -305,7 +305,7 @@ class Settings implements ModuleInterface {
 	 * @return array Ordered list of provider IDs.
 	 */
 	public function get_provider_order(): array {
-		return $this->provider_settings['provider_order'] ?? [];
+		return $this->provider_settings['provider_order'] ?? array();
 	}
 
 	/**
@@ -433,10 +433,10 @@ class Settings implements ModuleInterface {
 		$is_google = 'google' === $type || 'google' === $provider_id;
 		$name      = $config['name'] ?? '';
 
-		$styles   = $config['button_styles'] ?? [];
-		$mappings = $config['field_mappings'] ?? [];
+		$styles   = $config['button_styles'] ?? array();
+		$mappings = $config['field_mappings'] ?? array();
 
-		$default_styles = [
+		$default_styles = array(
 			'background_color'       => '#ffffff',
 			'text_color'             => '#3d4145',
 			'border_color'           => '#ccced0',
@@ -447,24 +447,24 @@ class Settings implements ModuleInterface {
 			'hover_background_color' => '#f7f7f7',
 			'hover_text_color'       => '#3d4145',
 			'hover_border_color'     => '#babcbe',
-		];
+		);
 		$styles         = wp_parse_args( $styles, $default_styles );
 
-		$default_mappings = [
+		$default_mappings = array(
 			'email'        => 'email',
 			'first_name'   => '',
 			'last_name'    => '',
 			'display_name' => '',
 			'avatar'       => '',
-		];
+		);
 		if ( $is_google ) {
-			$default_mappings = [
+			$default_mappings = array(
 				'email'        => 'email',
 				'first_name'   => 'given_name',
 				'last_name'    => 'family_name',
 				'display_name' => 'name',
 				'avatar'       => 'picture',
-			];
+			);
 		}
 		$mappings = wp_parse_args( $mappings, $default_mappings );
 		?>
@@ -730,13 +730,13 @@ class Settings implements ModuleInterface {
 			<?php
 			$this->render_provider_edit_panel(
 				'new-custom',
-				[
+				array(
 					'type'          => 'custom',
 					'name'          => '',
 					'client_id'     => '',
 					'client_secret' => '',
 					'enabled'       => true,
-				],
+				),
 				true
 			);
 			?>
@@ -750,7 +750,7 @@ class Settings implements ModuleInterface {
 	 * @return array All provider configs keyed by provider ID.
 	 */
 	private function get_all_provider_configs(): array {
-		return $this->provider_settings['providers'] ?? [];
+		return $this->provider_settings['providers'] ?? array();
 	}
 
 	/**
@@ -770,7 +770,7 @@ class Settings implements ModuleInterface {
 	 * @return array Default Google config.
 	 */
 	private function get_default_google_config(): array {
-		return [
+		return array(
 			'type'          => 'google',
 			'name'          => 'Google',
 			'client_id'     => '',
@@ -778,7 +778,7 @@ class Settings implements ModuleInterface {
 			'enabled'       => true,
 			'button_text'   => '',
 			'button_icon'   => '',
-			'button_styles' => [
+			'button_styles' => array(
 				'background_color'       => '#ffffff',
 				'text_color'             => '#3d4145',
 				'border_color'           => '#ccced0',
@@ -789,8 +789,8 @@ class Settings implements ModuleInterface {
 				'hover_background_color' => '#f7f7f7',
 				'hover_text_color'       => '#3d4145',
 				'hover_border_color'     => '#babcbe',
-			],
-		];
+			),
+		);
 	}
 
 	/**
@@ -908,11 +908,11 @@ class Settings implements ModuleInterface {
 	 */
 	public function sanitize_legacy_settings( $input ): array {
 		if ( ! is_array( $input ) ) {
-			return [];
+			return array();
 		}
 
-		$allowed_keys = [ 'client_id', 'client_secret', 'registration_enabled', 'one_tap_login', 'one_tap_login_screen', 'whitelisted_domains' ];
-		
+		$allowed_keys = array( 'client_id', 'client_secret', 'registration_enabled', 'one_tap_login', 'one_tap_login_screen', 'whitelisted_domains' );
+
 		$sanitized = array_intersect_key(
 			array_map( 'sanitize_text_field', $input ),
 			array_flip( $allowed_keys )
@@ -932,18 +932,18 @@ class Settings implements ModuleInterface {
 		// Handle cases where WordPress passes null or non-array input.
 		if ( ! is_array( $input ) ) {
 			// Return empty array - cannot call get_option here as it causes infinite recursion.
-			return [];
+			return array();
 		}
 
 		try {
 			// NOTE: Legacy settings handling removed from here to prevent infinite recursion.
 			// Legacy settings (wp_google_login_settings) are now handled by a separate sanitize callback.
 
-			$sanitized = [
+			$sanitized = array(
 				'version'        => '2.2.1',
-				'providers'      => [],
-				'provider_order' => [],
-			];
+				'providers'      => array(),
+				'provider_order' => array(),
+			);
 
 			// Sanitize provider settings.
 			if ( isset( $input['providers'] ) && is_array( $input['providers'] ) ) {
@@ -982,7 +982,7 @@ class Settings implements ModuleInterface {
 			return $sanitized;
 		} catch ( \Exception $e ) {
 			// Return empty array - cannot call get_option here as it causes infinite recursion.
-			return [];
+			return array();
 		}
 	}
 
@@ -996,7 +996,7 @@ class Settings implements ModuleInterface {
 	private function sanitize_provider( array $provider ): array {
 		// Client secret needs special handling - don't use sanitize_text_field as it corrupts the secret.
 		$client_secret = $provider['client_secret'] ?? '';
-		
+
 		// Safely handle slashing - wp_unslash may not always be available.
 		if ( is_string( $client_secret ) && function_exists( 'wp_unslash' ) ) {
 			$client_secret = wp_unslash( $client_secret );
@@ -1007,7 +1007,7 @@ class Settings implements ModuleInterface {
 			$client_secret = '';
 		}
 
-		$sanitized = [
+		$sanitized = array(
 			'type'          => sanitize_key( $provider['type'] ?? 'custom' ),
 			'name'          => sanitize_text_field( $provider['name'] ?? '' ),
 			'enabled'       => ! empty( $provider['enabled'] ),
@@ -1015,8 +1015,8 @@ class Settings implements ModuleInterface {
 			'client_secret' => $this->encrypt_secret( $client_secret ),
 			'button_text'   => sanitize_text_field( $provider['button_text'] ?? '' ),
 			'button_icon'   => esc_url_raw( $provider['button_icon'] ?? '' ),
-			'button_styles' => $this->sanitize_button_styles( $provider['button_styles'] ?? [] ),
-		];
+			'button_styles' => $this->sanitize_button_styles( $provider['button_styles'] ?? array() ),
+		);
 
 		// Custom provider fields.
 		if ( 'google' !== ( $provider['type'] ?? 'custom' ) ) {
@@ -1025,7 +1025,7 @@ class Settings implements ModuleInterface {
 			$sanitized['user_info_url']  = $this->sanitize_external_url( $provider['user_info_url'] ?? '' );
 			$sanitized['scopes']         = sanitize_text_field( $provider['scopes'] ?? '' );
 			$sanitized['callback_url']   = esc_url_raw( $provider['callback_url'] ?? '' );
-			$sanitized['field_mappings'] = $this->sanitize_field_mappings( $provider['field_mappings'] ?? [] );
+			$sanitized['field_mappings'] = $this->sanitize_field_mappings( $provider['field_mappings'] ?? array() );
 		}
 
 		return $sanitized;
@@ -1039,23 +1039,23 @@ class Settings implements ModuleInterface {
 	 * @return array Sanitized styles.
 	 */
 	private function sanitize_button_styles( array $styles ): array {
-		$color_keys = [
+		$color_keys = array(
 			'background_color',
 			'text_color',
 			'border_color',
 			'hover_background_color',
 			'hover_text_color',
 			'hover_border_color',
-		];
+		);
 
-		$dimension_keys = [
+		$dimension_keys = array(
 			'border_width',
 			'border_radius',
 			'padding',
 			'font_size',
-		];
+		);
 
-		$sanitized = [];
+		$sanitized = array();
 
 		foreach ( $color_keys as $key ) {
 			if ( isset( $styles[ $key ] ) ) {
@@ -1149,7 +1149,7 @@ class Settings implements ModuleInterface {
 		$host = strtolower( $parsed['host'] );
 
 		// Reject localhost and common loopback names.
-		$blocked_hosts = [ 'localhost', '127.0.0.1', '0.0.0.0', '::1', '[::1]' ];
+		$blocked_hosts = array( 'localhost', '127.0.0.1', '0.0.0.0', '::1', '[::1]' );
 		if ( in_array( $host, $blocked_hosts, true ) ) {
 			return '';
 		}
@@ -1246,8 +1246,8 @@ class Settings implements ModuleInterface {
 	 * @return array Sanitized mappings.
 	 */
 	private function sanitize_field_mappings( array $mappings ): array {
-		$allowed_keys = [ 'email', 'first_name', 'last_name', 'display_name', 'avatar' ];
-		$sanitized    = [];
+		$allowed_keys = array( 'email', 'first_name', 'last_name', 'display_name', 'avatar' );
+		$sanitized    = array();
 
 		foreach ( $allowed_keys as $key ) {
 			if ( isset( $mappings[ $key ] ) ) {
@@ -1424,7 +1424,7 @@ class Settings implements ModuleInterface {
 			__( 'OAuth Login', 'oauth-login' ),
 			'manage_options',
 			'oauth-login',
-			[ $this, 'output' ]
+			array( $this, 'output' )
 		);
 	}
 

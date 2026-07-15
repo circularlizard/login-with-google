@@ -131,10 +131,10 @@ class LoginButtonRenderer {
 		$provider_id  = $provider->get_provider_id();
 		$callback_url = $provider->get_callback_url();
 
-		$state_data = [
+		$state_data = array(
 			'nonce'    => wp_create_nonce( 'oauth_login_' . $provider_id ),
 			'provider' => $provider_id,
-		];
+		);
 
 		/**
 		 * Filter the OAuth login state data.
@@ -144,13 +144,13 @@ class LoginButtonRenderer {
 		 */
 		$state_data = apply_filters( 'oauth.login_state', $state_data, $provider_id );
 
-		$args = [
+		$args = array(
 			'client_id'     => $provider->get_client_id(),
 			'redirect_uri'  => $callback_url,
 			'state'         => OAuthState::encode( $state_data ),
 			'scope'         => implode( ' ', $provider->get_scopes() ),
 			'response_type' => 'code',
-		];
+		);
 
 		/**
 		 * Filter the OAuth authorization arguments.
@@ -209,7 +209,7 @@ class LoginButtonRenderer {
 	private function get_button_styles( OAuthProvider $provider ): array {
 		$provider_id     = $provider->get_provider_id();
 		$default_styles  = $provider->get_button_styles();
-		$settings_styles = $this->settings->get_provider_setting( $provider_id, 'button_styles', [] );
+		$settings_styles = $this->settings->get_provider_setting( $provider_id, 'button_styles', array() );
 
 		if ( is_array( $settings_styles ) && ! empty( $settings_styles ) ) {
 			// Only override non-empty values from settings.
@@ -233,7 +233,7 @@ class LoginButtonRenderer {
 	 * @return string CSS style string.
 	 */
 	private function build_style_attribute( array $styles ): string {
-		$css = [];
+		$css = array();
 
 		if ( ! empty( $styles['background_color'] ) ) {
 			$css[] = 'background-color:' . $styles['background_color'];
@@ -267,7 +267,7 @@ class LoginButtonRenderer {
 	 * @return string CSS rule string.
 	 */
 	private function build_hover_style( string $provider_id, array $styles ): string {
-		$hover_css = [];
+		$hover_css = array();
 
 		if ( ! empty( $styles['hover_background_color'] ) ) {
 			$hover_css[] = 'background-color:' . $styles['hover_background_color'];
@@ -293,7 +293,7 @@ class LoginButtonRenderer {
 	 */
 	private function get_ordered_enabled_providers(): array {
 		$all_providers = $this->registry->get_all();
-		$enabled       = [];
+		$enabled       = array();
 
 		foreach ( $all_providers as $provider_id => $provider ) {
 			if ( $this->settings->is_provider_enabled( $provider_id ) ) {
@@ -302,7 +302,7 @@ class LoginButtonRenderer {
 		}
 
 		if ( empty( $enabled ) ) {
-			return [];
+			return array();
 		}
 
 		// Get configured order.
@@ -312,7 +312,7 @@ class LoginButtonRenderer {
 			return array_values( $enabled );
 		}
 
-		$ordered = [];
+		$ordered = array();
 
 		// Add providers in configured order.
 		foreach ( $order as $provider_id ) {

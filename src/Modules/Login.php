@@ -121,19 +121,19 @@ class Login implements ModuleInterface {
 		/**
 		 * Actions.
 		 */
-		add_action( 'login_footer', [ $this, 'login_button' ] );
+		add_action( 'login_footer', array( $this, 'login_button' ) );
 		// Priority is 20 because of issue: https://core.trac.wordpress.org/ticket/46748.
-		add_action( 'authenticate', [ $this, 'authenticate' ], 20 );
-		add_action( 'rtcamp.google_register_user', [ $this->authenticator, 'register' ] );
-		add_action( 'rtcamp.google_user_created', [ $this, 'user_meta' ] );
-		add_action( 'wp_login', [ $this, 'login_redirect' ] );
+		add_action( 'authenticate', array( $this, 'authenticate' ), 20 );
+		add_action( 'rtcamp.google_register_user', array( $this->authenticator, 'register' ) );
+		add_action( 'rtcamp.google_user_created', array( $this, 'user_meta' ) );
+		add_action( 'wp_login', array( $this, 'login_redirect' ) );
 
 		/**
 		 * Filters.
 		 */
-		add_filter( 'rtcamp.google_redirect_url', [ $this, 'redirect_url' ] );
-		add_filter( 'rtcamp.google_login_state', [ $this, 'state_redirect' ] );
-		add_filter( 'oauth.login_state', [ $this, 'state_redirect' ] );
+		add_filter( 'rtcamp.google_redirect_url', array( $this, 'redirect_url' ) );
+		add_filter( 'rtcamp.google_login_state', array( $this, 'state_redirect' ) );
+		add_filter( 'oauth.login_state', array( $this, 'state_redirect' ) );
 	}
 
 	/**
@@ -153,9 +153,9 @@ class Login implements ModuleInterface {
 
 			Helper::render_template(
 				$template,
-				[
+				array(
 					'login_url' => $login_url,
-				]
+				)
 			);
 		}
 
@@ -286,16 +286,16 @@ class Login implements ModuleInterface {
 			// Exchange code for access token.
 			$token_response = wp_remote_post(
 				$provider->get_token_url(),
-				[
-					'headers' => [ 'Accept' => 'application/json' ],
-					'body'    => [
+				array(
+					'headers' => array( 'Accept' => 'application/json' ),
+					'body'    => array(
 						'client_id'     => $provider->get_client_id(),
 						'client_secret' => $provider->get_client_secret(),
 						'redirect_uri'  => $provider->get_callback_url(),
 						'code'          => $code,
 						'grant_type'    => 'authorization_code',
-					],
-				]
+					),
+				)
 			);
 
 			if ( 200 !== wp_remote_retrieve_response_code( $token_response ) ) {
@@ -312,12 +312,12 @@ class Login implements ModuleInterface {
 			// Fetch user info.
 			$user_response = wp_remote_get( // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.wp_remote_get_wp_remote_get
 				$provider->get_user_info_url(),
-				[
-					'headers' => [
+				array(
+					'headers' => array(
 						'Accept'        => 'application/json',
 						'Authorization' => 'Bearer ' . $access_token,
-					],
-				]
+					),
+				)
 			);
 
 			if ( 200 !== wp_remote_retrieve_response_code( $user_response ) ) {
