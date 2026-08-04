@@ -24,6 +24,7 @@ use Circularlizard\OAuthLogin\Utils\ProviderRegistry;
  * @property bool|null registration_enabled
  * @property bool|null one_tap_login
  * @property string    one_tap_login_screen
+ * @property string|null login_message
  *
  * @package Circularlizard\OAuthLogin\Modules
  */
@@ -62,6 +63,7 @@ class Settings implements ModuleInterface {
 		'WP_GOOGLE_LOGIN_WHITELIST_DOMAINS' => 'whitelisted_domains',
 		'WP_GOOGLE_ONE_TAP_LOGIN'           => 'one_tap_login',
 		'WP_GOOGLE_ONE_TAP_LOGIN_SCREEN'    => 'one_tap_login_screen',
+		'WP_OAUTH_LOGIN_MESSAGE'            => 'login_message',
 	);
 
 	/**
@@ -217,7 +219,7 @@ class Settings implements ModuleInterface {
 	 */
 	public function register_settings(): void {
 		register_setting(
-			'wp_google_login',
+			'wp_oauth_login',
 			'wp_google_login_settings',
 			array(
 				'sanitize_callback' => array( $this, 'sanitize_legacy_settings' ),
@@ -264,6 +266,15 @@ class Settings implements ModuleInterface {
 			'oauth-login',
 			'wp_oauth_general_section',
 			array( 'label_for' => 'whitelisted-domains' )
+		);
+
+		add_settings_field(
+			'wp_oauth_login_message',
+			__( 'Login Message', 'oauth-login' ),
+			array( $this, 'login_message_field' ),
+			'oauth-login',
+			'wp_oauth_general_section',
+			array( 'label_for' => 'login-message' )
 		);
 
 		// Google One Tap section (Google-specific, only if Google is configured).
@@ -911,12 +922,18 @@ class Settings implements ModuleInterface {
 			return array();
 		}
 
-		$allowed_keys = array( 'client_id', 'client_secret', 'registration_enabled', 'one_tap_login', 'one_tap_login_screen', 'whitelisted_domains' );
+		$allowed_keys = array( 'client_id', 'client_secret', 'registration_enabled', 'one_tap_login', 'one_tap_login_screen', 'whitelisted_domains', 'login_message' );
 
-		$sanitized = array_intersect_key(
-			array_map( 'sanitize_text_field', $input ),
-			array_flip( $allowed_keys )
-		);
+		$sanitized = array();
+		foreach ( $allowed_keys as $key ) {
+			if ( isset( $input[ $key ] ) ) {
+				if ( 'login_message' === $key ) {
+					$sanitized[ $key ] = wp_kses_post( $input[ $key ] );
+				} else {
+					$sanitized[ $key ] = sanitize_text_field( $input[ $key ] );
+				}
+			}
+		}
 
 		return $sanitized;
 	}
@@ -1409,6 +1426,21 @@ class Settings implements ModuleInterface {
 		<input <?php $this->disabled( 'whitelisted_domains' ); ?> type='text' name='wp_google_login_settings[whitelisted_domains]' id="whitelisted-domains" value='<?php echo esc_attr( $this->whitelisted_domains ); ?>' autocomplete="off" />
 		<p class="description">
 			<?php echo esc_html( __( 'Add each domain comma separated', 'oauth-login' ) ); ?>
+		</p>
+		<?php
+	}
+
+	/**
+	 * Render the login message setting field.
+	 *
+	 * @return void
+	 */
+	public function login_message_field(): void {
+		$value = $this->login_message ?? '';
+		?>
+		<textarea <?php $this->disabled( 'login_message' ); ?> name='wp_google_login_settings[login_message]' id="login-message" rows="6" cols="60" class="large-text"><?php echo esc_textarea( $value ); ?></textarea>
+		<p class="description">
+			<?php esc_html_e( 'This HTML message will be displayed on the login page. Safe HTML tags are allowed.', 'oauth-login' ); ?>
 		</p>
 		<?php
 	}
