@@ -148,11 +148,11 @@ class SettingsTest extends TestCase {
 			]
 		);
 
-		// 2 general fields (registration + whitelisted domains).
+		// 3 general fields (registration, whitelisted domains, and login message).
 		WP_Mock::userFunction(
 			'add_settings_field',
 			[
-				'times' => 2
+				'times' => 3
 			]
 		);
 
@@ -190,11 +190,11 @@ class SettingsTest extends TestCase {
 			]
 		);
 
-		// 2 general fields (registration + whitelisted domains).
+		// 3 general fields (registration, whitelisted domains, and login message).
 		WP_Mock::userFunction(
 			'add_settings_field',
 			[
-				'times' => 2,
+				'times' => 3,
 			]
 		);
 
